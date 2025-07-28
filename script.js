@@ -25,21 +25,21 @@ const ALL_ENTITIES = [...BOSSES, ...MONSTERS];
 
 const healthValueEl = document.getElementById('health-value');
 const maxHealthEl = document.getElementById('max-health');
-const messageEl = document.getElementById('message');
 const gridEl = document.getElementById('grid');
 const newGameBtn = document.getElementById('new-game-btn');
 const bossNameEl = document.getElementById('boss-name');
 const bossProgressEl = document.getElementById('boss-progress');
 const monsterInfoPanel = document.getElementById('monster-info-panel');
 const gridWrapper = document.getElementById('grid-wrapper');
+const gameOverContainer = document.getElementById('game-over-container');
+const popupTitleEl = document.getElementById('popup-title');
 
 function initializeGrid() {
     health = 6; maxHealth = 6; defeatedBossesCount = 0;
     gridEl.innerHTML = ''; grid.length = 0;
     gridEl.style.pointerEvents = 'auto';
     gridEl.classList.remove('dimmed');
-    messageEl.innerText = '';
-    newGameBtn.classList.add('hidden-btn');
+    gameOverContainer.classList.add('hidden');
     isFlagMode = false;
     document.getElementById('flag-mode-btn').classList.remove('active');
 
@@ -163,7 +163,6 @@ function handleTileClick(index) {
                 defeatedBossesCount++;
                 if (tile.monsterName === 'Light Mage') { maxHealth = 10; health = 10; showFloatingText("Max Health +4", index); }
                 if (tile.monsterName === 'Dark Mage') { maxHealth = 15; health = 15; showFloatingText("Max Health +5", index); }
-                if (tile.monsterName === 'Golem') endGame('All bosses defeated!', false);
             }
         }
     }
@@ -173,8 +172,12 @@ function handleTileClick(index) {
     
     updateDisplay();
     grid.forEach((_, i) => updateTileDisplay(i));
-    if (health < 0) endGame("Game Over!", true);
-    else if (health === 0 && !tile.isDefeated) showFloatingText("Health is 0!", -1, true);
+
+    if (health < 0) {
+        endGame("You Lose!", false);
+    } else if (tile.monsterName === 'Golem' && tile.isDefeated) {
+        endGame('You Win!', true);
+    }
 }
 
 function updateTileDisplay(index) {
@@ -193,7 +196,6 @@ function updateTileDisplay(index) {
         tileEl.classList.add('empty');
         const iconClass = tile.type === 'pit' ? 'pit' : tile.monsterName.replace(/\s+/g, '-');
         
-        // Use 'icon-center' for pits, 'icon-top' for others
         const positionClass = tile.type === 'pit' ? 'icon-center' : 'icon-top';
         
         const iconDiv = document.createElement('div');
@@ -210,7 +212,7 @@ function updateTileDisplay(index) {
                 tileEl.appendChild(damageBottom);
             }
 
-            if (tile.value > 0) {
+            if (tile.value >= 0) {
                 const valueCenter = document.createElement('span');
                 valueCenter.className = 'value value-center';
                 valueCenter.style.fontSize = '1em';
@@ -230,7 +232,7 @@ function updateTileDisplay(index) {
         tileEl.classList.add('empty');
         if (tile.hasPotion) {
             if (tile.potionUsed) {
-                if (tile.value > 0) {
+                if (tile.value >= 0) {
                     const valueCenter = document.createElement('span');
                     valueCenter.className = 'value value-center';
                     valueCenter.innerText = tile.value;
@@ -240,7 +242,7 @@ function updateTileDisplay(index) {
                 const potionIcon = document.createElement('div');
                 potionIcon.className = 'potion-icon-display';
                 tileEl.appendChild(potionIcon);
-                if (tile.value >= 0) { // Changed > to >= to include 0
+                if (tile.value >= 0) { 
                     const valueBottom = document.createElement('span');
                     valueBottom.className = 'value value-bottom';
                     valueBottom.innerText = tile.value;
@@ -248,7 +250,7 @@ function updateTileDisplay(index) {
                 }
             }
         } else {
-             if (tile.value >= 0) { // Changed > to >= to include 0
+             if (tile.value >= 0) { 
                 const valueSpan = document.createElement('span');
                 valueSpan.className = 'value';
                 valueSpan.innerText = tile.value;
@@ -271,7 +273,7 @@ function showFloatingText(text, tileIndex, isDamage = false) {
     if (tileIndex >= 0) {
         const y = Math.floor(tileIndex / gridSizeX);
         const x = tileIndex % gridSizeX;
-        textEl.style.top = `${y * 44 + 22}px`; // Center of the tile
+        textEl.style.top = `${y * 44 + 22}px`; 
         textEl.style.left = `${x * 44 + 22}px`;
         textEl.style.transform = 'translateX(-50%)';
     } else {
@@ -313,16 +315,16 @@ function updateMonsterInfoPanel() {
 }
 
 
-function endGame(message, shouldLock) {
-    messageEl.innerText = message;
-    if (shouldLock) {
-        gridEl.style.pointerEvents = 'none';
-        gridEl.classList.add('dimmed');
-        newGameBtn.classList.remove('hidden-btn');
-    }
+function endGame(title, isWin) {
+    gridEl.style.pointerEvents = 'none';
+    gridEl.classList.add('dimmed');
+
+    popupTitleEl.innerText = title;
+    popupTitleEl.style.color = isWin ? '#48bb78' : '#f56565';
+    
+    gameOverContainer.classList.remove('hidden');
 }
 
-// Other utility functions (updateNumbers, updateDisplay, etc.)
 function updateNumbers(){for(let o=0;o<grid.length;o++){let t=0;const e=Math.floor(o/gridSizeX),l=o%gridSizeX;for(let a=-1;a<=1;a++)for(let d=-1;d<=1;d++){if(0===d&&0===a)continue;const n=l+d,r=e+a;if(n>=0&&n<gridSizeX&&r>=0&&r<gridSizeY){const g=r*gridSizeX+n,s=grid[g];["monster","pit","boss","eye"].includes(s.type)&&!s.isDefeated&&(t+=s.damage)}}grid[o].value=t}}
 function updateDisplay(){healthValueEl.innerText=Math.max(0,health),maxHealthEl.innerText=maxHealth;const o=BOSSES[defeatedBossesCount];o?(bossNameEl.innerText=o.name,bossProgressEl.innerText=`(${defeatedBossesCount}/3)`):(bossNameEl.innerText="Cleared!",bossProgressEl.innerText="(3/3)")}
 function hideNumbersAroundEye(o){const t=Math.floor(o/gridSizeX),e=o%gridSizeX;for(let l=-1;l<=1;l++)for(let a=-1;a<=1;a++){if(0===a&&0===l)continue;const d=e+a,n=t+l;d>=0&&d<gridSizeX&&n>=0&&n<gridSizeY&&(grid[n*gridSizeX+d].isHiddenByEye=!0)}}
