@@ -145,12 +145,20 @@ function handleTileClick(index) {
         const isActionable = ['monster', 'eye', 'pit', 'boss'].includes(tile.type);
         if (isActionable) {
             const isBoss = tile.type === 'boss';
+
             if (isBoss) {
-                const requiredBoss = BOSSES[defeatedBossesCount];
-                if (tile.monsterName !== requiredBoss.name) { showFloatingText(`Defeat ${requiredBoss.name} first!`, index, true); return; }
-                if (tile.monsterName === 'Light Mage' && health < maxHealth) { showFloatingText('Need full health!', index, true); return; }
+                // If boss damage is greater than current health, you lose.
+                if (tile.damage > health) {
+                    health -= tile.damage;
+                    showFloatingText(`-${tile.damage} HP`, index, true);
+                    updateDisplay();
+                    updateTileDisplay(index);
+                    endGame("You Lose!", false);
+                    return;
+                }
             }
             
+            // Apply damage for any monster or boss.
             health -= tile.damage;
             tile.isDefeated = true;
             numbersNeedUpdating = true;
@@ -161,8 +169,17 @@ function handleTileClick(index) {
             
             if (isBoss) {
                 defeatedBossesCount++;
-                if (tile.monsterName === 'Light Mage') { maxHealth = 10; health = 10; showFloatingText("Max Health +4", index); }
-                if (tile.monsterName === 'Dark Mage') { maxHealth = 15; health = 15; showFloatingText("Max Health +5", index); }
+                // Rewards are now added to your max health and health is fully restored.
+                if (tile.monsterName === 'Light Mage') { 
+                    maxHealth += 4; 
+                    health = maxHealth; 
+                    showFloatingText("Max Health +4", index); 
+                }
+                if (tile.monsterName === 'Dark Mage') { 
+                    maxHealth += 5; 
+                    health = maxHealth; 
+                    showFloatingText("Max Health +5", index); 
+                }
             }
         }
     }
@@ -173,8 +190,10 @@ function handleTileClick(index) {
     updateDisplay();
     grid.forEach((_, i) => updateTileDisplay(i));
 
-    if (health < 0) {
-        endGame("You Lose!", false);
+    if (health <= 0) {
+        if (gameOverContainer.classList.contains('hidden')) {
+            endGame("You Lose!", false);
+        }
     } else if (tile.monsterName === 'Golem' && tile.isDefeated) {
         endGame('You Win!', true);
     }
