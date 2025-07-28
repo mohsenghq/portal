@@ -1,0 +1,207 @@
+body {
+    background-color: #1a202c;
+    color: white;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+}
+
+#main-container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px; /* Reduced gap */
+    width: 100%;
+    user-select: none;
+}
+
+#game-header {
+    font-size: 1.1em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#grid-wrapper {
+    position: relative; /* For floating text positioning */
+}
+
+#grid {
+    display: grid;
+    grid-template-columns: repeat(7, 40px);
+    gap: 2px; /* Smaller gap for thinner lines */
+    background-color: #808080; /* Gray color for the lines */
+    padding: 2px; /* Adjust padding to match the gap */
+    border-radius: 8px;
+    width: fit-content;
+}
+
+#grid.dimmed {
+    filter: brightness(0.4);
+}
+
+.tile {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background-size: cover;
+    background-color: #4a5568;
+    position: relative;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.icon-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    z-index: 1;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.tile.hidden { background-color: #4a5568; }
+.tile.empty { background-color: #2d3748; }
+
+.tile.flagged {
+    background-image: url('icons/flag.png');
+    background-size: 80%; 
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.value { color: white; z-index: 3; font-size: 0.9em; }
+.damage { color: yellow; font-weight: bold; z-index: 2; }
+
+.icon-top { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 60%; height: 60%; z-index: 1; background-size: contain; background-repeat: no-repeat; background-position: center; }
+.value-bottom { 
+    position: absolute; 
+    bottom: 2px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    z-index: 2; 
+    font-size: 0.8em; /* Added for a smaller font */
+}
+.value-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2em; }
+
+.potion-icon-display {
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 65%; /* Increased from 50% */
+    height: 65%; /* Increased from 50% */
+    background-image: url('icons/potion.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.low-opacity { opacity: 0.35; }
+
+/* Floating Text Animation */
+.floating-text {
+    position: absolute;
+    font-size: 1.2em;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px black;
+    pointer-events: none;
+    animation: floatUp 2s ease-out forwards; /* Changed duration to 2s */
+    z-index: 100;
+}
+
+@keyframes floatUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+}
+
+/* --- MONSTER INFO PANEL --- */
+#monster-info-panel {
+    width: 280px;
+    background-color: #2d3748;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.monster-entry { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    font-size: 0.9em;
+    transition: all 0.3s ease; /* Smooth transition */
+}
+.monster-entry.cleared {
+    opacity: 0.5;
+    filter: grayscale(80%);
+}
+.monster-entry .icon { width: 32px; height: 32px; background-size: contain; background-repeat: no-repeat; background-position: center; }
+.monster-entry .details { display: flex; flex-direction: column; flex-grow: 1; }
+.monster-entry .name { font-weight: bold; }
+.monster-entry .stats { color: #a0aec0; }
+.monster-entry .count { margin-left: auto; font-size: 1.1em; font-weight: bold; }
+
+/* --- CUSTOM ICON PATHS --- */
+.Light-Mage { background-image: url('icons/lightmage.png'); }
+.Dark-Mage { background-image: url('icons/darkmage.png'); }
+.Golem { background-image: url('icons/golem.png'); }
+.Bug { background-image: url('icons/bug.png'); }
+.Eye { background-image: url('icons/eye.png'); }
+.Blue-ghost { background-image: url('icons/blueghost.png'); }
+.Purple-ghost { background-image: url('icons/purpleghost.png'); }
+.Red-ghost { background-image: url('icons/redghost.png'); }
+.Rat { background-image: url('icons/rat.png'); }
+.Skeleton { background-image: url('icons/skeleton.png'); }
+.Snake { background-image: url('icons/snake.png'); }
+.pit { 
+    background-image: url('icons/hole.png'); 
+    background-size: 80%; 
+    background-repeat: no-repeat; 
+    background-position: center; 
+}
+#game-over-container { position: relative; display: flex; justify-content: center; align-items: center; min-height: 40px; }
+#message { color: #f6ad55; font-size: 1.2em; font-weight: bold; position: absolute; z-index: 1; }
+#new-game-btn { padding: 6px 12px; font-size: 0.9em; font-weight: bold; color: white; background-color: #3182ce; border: none; border-radius: 6px; cursor: pointer; position: absolute; z-index: 2; }
+#new-game-btn:hover { background-color: #2b6cb0; }
+.hidden-btn { display: none; }
+
+#game-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 20px; }
+.footer-btn { background: none; border: none; cursor: pointer; padding: 0; }
+.footer-btn img { width: 40px; height: 40px; } /* Bigger flag icon */
+.footer-btn.active { background-color: rgba(255, 255, 255, 0.2); border-radius: 8px; }
+
+#health-display { display: flex; align-items: center; font-size: 1em; gap: 6px; }
+#health-display img { width: 24px; height: 24px; }
+
+@media (max-width: 800px) {
+    #main-container { flex-direction: column; align-items: center; }
+    #monster-info-panel { width: 90%; max-width: 400px; }
+}

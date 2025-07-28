@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lost Dogs: Portals Clone</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="main-container">
+        <div id="game-container">
+            <header id="game-header">
+                <span>Hunt and kill</span>
+                <span id="boss-name">light mage</span>
+                <span id="boss-progress"></span>
+            </header>
+
+            <div id="grid-wrapper">
+                <div id="grid"></div>
+            </div>
+
+            <div id="game-over-container">
+                <div id="message"></div>
+                <button id="new-game-btn" class="hidden-btn">New Game</button>
+            </div>
+
+            <footer id="game-footer">
+                <!-- <button id="help-btn" class="footer-btn">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📖%3C/text%3E%3C/svg%3E" alt="Help">
+                </button> -->
+                <button id="flag-mode-btn" class="footer-btn">
+                    <img src="icons/flag.png" alt="Flag Mode">
+                </button>
+                <div id="health-display">
+                    <img src="icons/heart.png" alt="Health">
+                    <span id="health-value">6</span>/<span id="max-health">6</span>
+                </div>
+            </footer>
+        </div>
+
+        <div id="monster-info-panel">
+            </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
