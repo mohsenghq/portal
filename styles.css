@@ -39,13 +39,16 @@ body {
 }
 
 #grid {
-    display: grid;
-    grid-template-columns: repeat(7, 40px);
+display: grid;
+    grid-template-columns: repeat(7, 1fr);
     gap: 2px;
     background-color: #808080;
     padding: 2px;
     border-radius: 8px;
-    width: fit-content;
+    height: 80vh;
+    width: calc(80vh * 7 / 11);
+    max-width: 98vw;
+    max-height: 98vh;
 }
 
 #grid.dimmed {
@@ -53,8 +56,8 @@ body {
 }
 
 .tile {
-    width: 40px;
-    height: 40px;
+    width: 100%;
+    aspect-ratio: 1 / 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -62,8 +65,8 @@ body {
     background-size: cover;
     background-color: #4a5568;
     position: relative;
-    border-radius: 4px;
-    font-size: 0.9em;
+    border-radius: 0.4vw;
+    font-size: 2.5vw;
     font-weight: bold;
 }
 
@@ -94,15 +97,19 @@ body {
 .damage { color: yellow; font-weight: bold; z-index: 2; }
 
 .icon-top { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 60%; height: 60%; z-index: 1; background-size: contain; background-repeat: no-repeat; background-position: center; }
+ .icon-top { position: absolute; top: 4%; left: 50%; transform: translateX(-50%); width: 60%; height: 60%; z-index: 1; background-size: contain; background-repeat: no-repeat; background-position: center; }
+ .value { color: white; z-index: 3; font-size: 2vw; }
+ .damage { color: yellow; font-weight: bold; z-index: 2; font-size: 2vw; }
 .value-bottom { 
     position: absolute; 
-    bottom: 2px; 
+    bottom: 4%; 
     left: 50%; 
     transform: translateX(-50%); 
     z-index: 2; 
-    font-size: 0.8em;
+    font-size: 1.5vw;
 }
 .value-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.9em; }
+ .value-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2vw; }
 
 .potion-icon-display {
     position: absolute;
