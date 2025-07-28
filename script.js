@@ -240,7 +240,7 @@ function updateTileDisplay(index) {
                 const potionIcon = document.createElement('div');
                 potionIcon.className = 'potion-icon-display';
                 tileEl.appendChild(potionIcon);
-                if (tile.value > 0) {
+                if (tile.value >= 0) { // Changed > to >= to include 0
                     const valueBottom = document.createElement('span');
                     valueBottom.className = 'value value-bottom';
                     valueBottom.innerText = tile.value;
@@ -248,7 +248,7 @@ function updateTileDisplay(index) {
                 }
             }
         } else {
-             if (tile.value > 0) {
+             if (tile.value >= 0) { // Changed > to >= to include 0
                 const valueSpan = document.createElement('span');
                 valueSpan.className = 'value';
                 valueSpan.innerText = tile.value;
