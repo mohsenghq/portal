@@ -21,7 +21,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px; 
+    gap: 4px;
     width: 100%;
     user-select: none;
 }
@@ -39,7 +39,7 @@ body {
 }
 
 #grid {
-display: grid;
+    display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 2px;
     background-color: #808080;
@@ -66,7 +66,8 @@ display: grid;
     background-color: #4a5568;
     position: relative;
     border-radius: 0.4vw;
-    font-size: 2.5vw;
+    /* Set a single, responsive base font size that has min/max limits */
+    font-size: clamp(8px, 1.6vw, 16px);
     font-weight: bold;
 }
 
@@ -88,28 +89,45 @@ display: grid;
 
 .tile.flagged {
     background-image: url('icons/flag.png');
-    background-size: 80%; 
+    background-size: 80%;
     background-repeat: no-repeat;
     background-position: center;
 }
 
-.value { color: white; z-index: 3; font-size: 0.9em; }
+/* Set all text elements in the tile to inherit the same font size */
+.value, .damage, .value-bottom, .value-center {
+    font-size: 1em;
+}
+
+.value, .value-center { color: white; z-index: 3; }
 .damage { color: yellow; font-weight: bold; z-index: 2; }
 
-.icon-top { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 60%; height: 60%; z-index: 1; background-size: contain; background-repeat: no-repeat; background-position: center; }
- .icon-top { position: absolute; top: 4%; left: 50%; transform: translateX(-50%); width: 60%; height: 60%; z-index: 1; background-size: contain; background-repeat: no-repeat; background-position: center; }
- .value { color: white; z-index: 3; font-size: 2vw; }
- .damage { color: yellow; font-weight: bold; z-index: 2; font-size: 2vw; }
-.value-bottom { 
-    position: absolute; 
-    bottom: 4%; 
-    left: 50%; 
-    transform: translateX(-50%); 
-    z-index: 2; 
-    font-size: 1.5vw;
+
+.icon-top {
+    position: absolute;
+    top: 4%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 60%;
+    z-index: 1;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
-.value-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.9em; }
- .value-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2vw; }
+.value-bottom {
+    position: absolute;
+    bottom: 4%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+.value-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
 
 .potion-icon-display {
     position: absolute;
@@ -151,10 +169,10 @@ display: grid;
     gap: 12px;
 }
 
-.monster-entry { 
-    display: flex; 
-    align-items: center; 
-    gap: 12px; 
+.monster-entry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     font-size: 0.9em;
     transition: all 0.3s ease;
 }
@@ -179,11 +197,11 @@ display: grid;
 .Rat { background-image: url('icons/rat.png'); }
 .Skeleton { background-image: url('icons/skeleton.png'); }
 .Snake { background-image: url('icons/snake.png'); }
-.pit { 
-    background-image: url('icons/hole.png'); 
-    background-size: 80%; 
-    background-repeat: no-repeat; 
-    background-position: center; 
+.pit {
+    background-image: url('icons/hole.png');
+    background-size: 80%;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 /* --- Game Over Popup --- */
