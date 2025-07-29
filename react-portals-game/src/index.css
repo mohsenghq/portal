@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom game-specific styles that are hard to express with Tailwind */
+
+.tile {
+  aspect-ratio: 1 / 1;
+  border-radius: 0.4vw;
+  font-size: clamp(8px, 1.6vw, 16px);
+  position: relative;
+}
+
+.icon-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  z-index: 10;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.icon-top {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 60%;
+  z-index: 10;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.value-bottom {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+
+.value-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+}
+
+.potion-icon-display {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 65%;
+  height: 65%;
+  background-image: url('/icons/potion.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 10;
+}
+
+.floating-text {
+  position: absolute;
+  font-size: 1.2em;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px black;
+  pointer-events: none;
+  animation: floatUp 2s ease-out forwards;
+  z-index: 100;
+}
+
+@keyframes floatUp {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-50px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Monster/Icon classes */
+.Light-Mage { background-image: url('/icons/lightmage.png'); }
+.Dark-Mage { background-image: url('/icons/darkmage.png'); }
+.Golem { background-image: url('/icons/golem.png'); }
+.Bug { background-image: url('/icons/bug.png'); }
+.Eye { background-image: url('/icons/eye.png'); }
+.Blue-ghost { background-image: url('/icons/blueghost.png'); }
+.Purple-ghost { background-image: url('/icons/purpleghost.png'); }
+.Red-ghost { background-image: url('/icons/redghost.png'); }
+.Rat { background-image: url('/icons/rat.png'); }
+.Skeleton { background-image: url('/icons/skeleton.png'); }
+.Snake { background-image: url('/icons/snake.png'); }
+.pit {
+  background-image: url('/icons/hole.png');
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.flagged {
+  background-image: url('/icons/flag.png');
+  background-size: 80%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
