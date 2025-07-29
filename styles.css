@@ -387,6 +387,25 @@ body {
 .footer-btn img { width: 40px; height: 40px; }
 .footer-btn.active { background-color: rgba(255, 255, 255, 0.2); border-radius: 8px; }
 
+/* .hidden {
+    display: none;
+} */
+
+.new-game-button {
+    padding: 8px 16px;
+    font-size: 1em;
+    font-weight: bold;
+    color: white;
+    background-color: #3182ce;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.new-game-button:hover {
+    background-color: #2b6cb0;
+}
+
 #health-display img { width: 24px; height: 24px; }
 
 /* Mobile optimizations */

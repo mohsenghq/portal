@@ -27,6 +27,7 @@ const healthValueEl = document.getElementById('health-value');
 const maxHealthEl = document.getElementById('max-health');
 const gridEl = document.getElementById('grid');
 const newGameBtn = document.getElementById('new-game-btn');
+const newGameFooterBtn = document.getElementById('new-game-footer-btn');
 const bossNameEl = document.getElementById('boss-name');
 const bossProgressEl = document.getElementById('boss-progress');
 const monsterInfoPanel = document.getElementById('monster-info-panel');
@@ -44,6 +45,7 @@ function initializeGrid() {
     gridEl.style.pointerEvents = 'auto';
     gridEl.classList.remove('dimmed');
     gameOverContainer.classList.add('hidden');
+    newGameFooterBtn.classList.add('hidden');
     isFlagMode = false;
     document.getElementById('flag-mode-btn').classList.remove('active');
 
@@ -252,6 +254,7 @@ function updateTileDisplay(index) {
                 const damageBottom = document.createElement('span');
                 damageBottom.className = 'damage value-bottom low-opacity';
                 damageBottom.innerText = tile.damage;
+                damageBottom.style.fontSize = '0.9em';
                 tileEl.appendChild(damageBottom);
             }
 
@@ -268,6 +271,7 @@ function updateTileDisplay(index) {
                 const damageSpan = document.createElement('span');
                 damageSpan.className = 'damage value-bottom';
                 damageSpan.innerText = tile.damage;
+                damageSpan.style.fontSize = '0.9em';
                 tileEl.appendChild(damageSpan);
             }
         }
@@ -289,6 +293,7 @@ function updateTileDisplay(index) {
                     const valueBottom = document.createElement('span');
                     valueBottom.className = 'value value-bottom';
                     valueBottom.innerText = tile.isHiddenByEye ? '?' : tile.value;
+                    valueBottom.style.fontSize = '0.9em';
                     tileEl.appendChild(valueBottom);
                 }
             }
@@ -376,6 +381,12 @@ function endGame(title, isWin) {
     gameOverContainer.classList.remove('hidden');
 }
 
+function closeEndGamePopup() {
+    gameOverContainer.classList.add('hidden');
+    gridEl.classList.remove('dimmed');
+    newGameFooterBtn.classList.remove('hidden');
+}
+
 function showMobileMonsterPanel() {
     updateMobileMonsterList();
     mobileMonsterPopup.classList.remove('hidden');
@@ -414,7 +425,11 @@ function updateNumbers(){for(let o=0;o<grid.length;o++){let t=0;const e=Math.flo
 function updateDisplay(){healthValueEl.innerText=Math.max(0,health),maxHealthEl.innerText=maxHealth;const o=BOSSES[defeatedBossesCount];o?(bossNameEl.innerText=o.name,bossProgressEl.innerText=`(${defeatedBossesCount}/3)`):(bossNameEl.innerText="Cleared!",bossProgressEl.innerText="(3/3)")}
 function hideNumbersAroundEye(o){const t=Math.floor(o/gridSizeX),e=o%gridSizeX;for(let l=-1;l<=1;l++)for(let a=-1;a<=1;a++){if(0===a&&0===l)continue;const d=e+a,n=t+l;d>=0&&d<gridSizeX&&n>=0&&n<gridSizeY&&(grid[n*gridSizeX+d].isHiddenByEye=!0)}}
 function revealNumbersAroundEye(o){const t=Math.floor(o/gridSizeX),e=o%gridSizeX;for(let l=-1;l<=1;l++)for(let a=-1;a<=1;a++){if(0===a&&0===l)continue;const d=e+a,n=t+l;d>=0&&d<gridSizeX&&n>=0&&n<gridSizeY&&(grid[n*gridSizeX+d].isHiddenByEye=!1)}}
+
+// Event Listeners
 newGameBtn.addEventListener('click', initializeGrid);
+newGameFooterBtn.addEventListener('click', initializeGrid);
+
 document.getElementById('flag-mode-btn').addEventListener('click', () => {
     isFlagMode = !isFlagMode;
     document.getElementById('flag-mode-btn').classList.toggle('active', isFlagMode);
@@ -427,7 +442,7 @@ if (closeMonsterPopup) {
     closeMonsterPopup.addEventListener('click', hideMobileMonsterPanel);
 }
 
-// Close popup when clicking outside
+// Close popups when clicking outside
 if (mobileMonsterPopup) {
     mobileMonsterPopup.addEventListener('click', (e) => {
         if (e.target === mobileMonsterPopup) {
@@ -435,5 +450,10 @@ if (mobileMonsterPopup) {
         }
     });
 }
+gameOverContainer.addEventListener('click', (e) => {
+    if (e.target === gameOverContainer) {
+        closeEndGamePopup();
+    }
+});
 
 initializeGrid();
