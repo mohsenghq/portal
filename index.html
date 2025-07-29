@@ -5,40 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lost Dogs: Portals Clone</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div id="main-container">
-        <div id="game-container">
-            <header id="game-header">
-                <span>Hunt and kill</span>
-                <span id="boss-name">light mage</span>
-                <span id="boss-progress"></span>
-            </header>
+    <div class="container-fluid h-100">
+        <div class="row h-100 g-0">
+            <div class="col-12 col-lg-8 d-flex justify-content-center">
+                <div id="game-container">
+                    <header id="game-header">
+                        <span>Hunt and kill</span>
+                        <span id="boss-name">light mage</span>
+                        <span id="boss-progress"></span>
+                    </header>
 
-            <div id="grid-wrapper">
-                <div id="grid"></div>
-                <div id="game-over-container" class="hidden">
-                    <div id="popup">
-                        <h2 id="popup-title"></h2>
-                        <button id="new-game-btn">New Game</button>
+                    <div id="grid-wrapper">
+                        <div id="grid"></div>
+                        <div id="game-over-container" class="hidden">
+                            <div id="popup">
+                                <h2 id="popup-title"></h2>
+                                <button id="new-game-btn">New Game</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer id="game-footer">
+                        <button id="flag-mode-btn" class="footer-btn">
+                            <img src="icons/flag.png" alt="Flag Mode">
+                        </button>
+                        
+                        <!-- Add monster panel button for mobile -->
+                        <button id="monster-panel-btn" class="footer-btn d-lg-none">
+                            <img src="icons/monster.png" alt="Monster Panel">
+                        </button>
+                        
+                        <div id="health-display">
+                            <img src="icons/heart.png" alt="Health">
+                            <span id="health-value">6</span>/<span id="max-health">6</span>
+                        </div>
+                    </footer>
+                    
+                    <!-- Mobile popup for monster panel -->
+                    <div id="mobile-monster-popup" class="d-lg-none hidden">
+                        <div class="popup-content">
+                            <div class="popup-header">
+                                <h3>Monsters</h3>
+                                <button id="close-monster-popup">&times;</button>
+                            </div>
+                            <div id="mobile-monster-list"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <footer id="game-footer">
-                <button id="flag-mode-btn" class="footer-btn">
-                    <img src="icons/flag.png" alt="Flag Mode">
-                </button>
-                <div id="health-display">
-                    <img src="icons/heart.png" alt="Health">
-                    <span id="health-value">6</span>/<span id="max-health">6</span>
-                </div>
-            </footer>
-        </div>
-
-        <div id="monster-info-panel">
+            <div class="col-12 col-lg-3 d-none d-lg-block">
+                <div id="monster-info-panel"></div>
             </div>
+        </div>
     </div>
+    <!-- scripts -->
     <script src="script.js"></script>
 </body>
+
 </html>

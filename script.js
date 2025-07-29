@@ -33,6 +33,10 @@ const monsterInfoPanel = document.getElementById('monster-info-panel');
 const gridWrapper = document.getElementById('grid-wrapper');
 const gameOverContainer = document.getElementById('game-over-container');
 const popupTitleEl = document.getElementById('popup-title');
+const monsterPanelBtn = document.getElementById('monster-panel-btn');
+const mobileMonsterPopup = document.getElementById('mobile-monster-popup');
+const closeMonsterPopup = document.getElementById('close-monster-popup');
+const mobileMonsterList = document.getElementById('mobile-monster-list');
 
 function initializeGrid() {
     health = 6; maxHealth = 6; defeatedBossesCount = 0;
@@ -190,7 +194,7 @@ function handleTileClick(index) {
     updateDisplay();
     grid.forEach((_, i) => updateTileDisplay(i));
 
-    if (health <= 0) {
+    if (health < 0) {
         if (gameOverContainer.classList.contains('hidden')) {
             endGame("You Lose!", false);
         }
@@ -290,10 +294,12 @@ function showFloatingText(text, tileIndex, isDamage = false) {
     }
 
     if (tileIndex >= 0) {
+        const gridRect = gridEl.getBoundingClientRect();
+        const tileSize = gridRect.width / gridSizeX;
         const y = Math.floor(tileIndex / gridSizeX);
         const x = tileIndex % gridSizeX;
-        textEl.style.top = `${y * 44 + 22}px`; 
-        textEl.style.left = `${x * 44 + 22}px`;
+        textEl.style.top = `${y * tileSize + tileSize/2}px`; 
+        textEl.style.left = `${x * tileSize + tileSize/2}px`;
         textEl.style.transform = 'translateX(-50%)';
     } else {
         textEl.style.top = '50%';
@@ -309,6 +315,7 @@ function showFloatingText(text, tileIndex, isDamage = false) {
 
 
 function updateMonsterInfoPanel() {
+    // Update desktop panel
     monsterInfoPanel.innerHTML = '';
     const allMonsterTypes = [...BOSSES, ...MONSTERS.filter(m => m.type !== 'pit')];
 
@@ -331,6 +338,11 @@ function updateMonsterInfoPanel() {
         `;
         monsterInfoPanel.appendChild(entry);
     });
+    
+    // Also update mobile list if popup is open
+    if (mobileMonsterPopup && !mobileMonsterPopup.classList.contains('hidden')) {
+        updateMobileMonsterList();
+    }
 }
 
 
@@ -344,6 +356,40 @@ function endGame(title, isWin) {
     gameOverContainer.classList.remove('hidden');
 }
 
+function showMobileMonsterPanel() {
+    updateMobileMonsterList();
+    mobileMonsterPopup.classList.remove('hidden');
+}
+
+function hideMobileMonsterPanel() {
+    mobileMonsterPopup.classList.add('hidden');
+}
+
+function updateMobileMonsterList() {
+    mobileMonsterList.innerHTML = '';
+    const allMonsterTypes = [...BOSSES, ...MONSTERS.filter(m => m.type !== 'pit')];
+
+    allMonsterTypes.forEach(monster => {
+        const remaining = grid.filter(tile => tile.monsterName === monster.name && !tile.isDefeated).length;
+        const entry = document.createElement('div');
+        entry.className = 'monster-entry';
+        if (remaining === 0) {
+            entry.classList.add('cleared');
+        }
+        
+        const iconClass = monster.name.replace(/\s+/g, '-');
+        entry.innerHTML = `
+            <div class="icon ${iconClass}"></div>
+            <div class="details">
+                <span class="name">${monster.name}</span>
+                <span class="stats">Dmg: ${monster.damage}</span>
+            </div>
+            <div class="count">${remaining}/${monster.amount}</div>
+        `;
+        mobileMonsterList.appendChild(entry);
+    });
+}
+
 function updateNumbers(){for(let o=0;o<grid.length;o++){let t=0;const e=Math.floor(o/gridSizeX),l=o%gridSizeX;for(let a=-1;a<=1;a++)for(let d=-1;d<=1;d++){if(0===d&&0===a)continue;const n=l+d,r=e+a;if(n>=0&&n<gridSizeX&&r>=0&&r<gridSizeY){const g=r*gridSizeX+n,s=grid[g];["monster","pit","boss","eye"].includes(s.type)&&!s.isDefeated&&(t+=s.damage)}}grid[o].value=t}}
 function updateDisplay(){healthValueEl.innerText=Math.max(0,health),maxHealthEl.innerText=maxHealth;const o=BOSSES[defeatedBossesCount];o?(bossNameEl.innerText=o.name,bossProgressEl.innerText=`(${defeatedBossesCount}/3)`):(bossNameEl.innerText="Cleared!",bossProgressEl.innerText="(3/3)")}
 function hideNumbersAroundEye(o){const t=Math.floor(o/gridSizeX),e=o%gridSizeX;for(let l=-1;l<=1;l++)for(let a=-1;a<=1;a++){if(0===a&&0===l)continue;const d=e+a,n=t+l;d>=0&&d<gridSizeX&&n>=0&&n<gridSizeY&&(grid[n*gridSizeX+d].isHiddenByEye=!0)}}
@@ -353,5 +399,21 @@ document.getElementById('flag-mode-btn').addEventListener('click', () => {
     isFlagMode = !isFlagMode;
     document.getElementById('flag-mode-btn').classList.toggle('active', isFlagMode);
 });
+if (monsterPanelBtn) {
+    monsterPanelBtn.addEventListener('click', showMobileMonsterPanel);
+}
+
+if (closeMonsterPopup) {
+    closeMonsterPopup.addEventListener('click', hideMobileMonsterPanel);
+}
+
+// Close popup when clicking outside
+if (mobileMonsterPopup) {
+    mobileMonsterPopup.addEventListener('click', (e) => {
+        if (e.target === mobileMonsterPopup) {
+            hideMobileMonsterPanel();
+        }
+    });
+}
 
 initializeGrid();

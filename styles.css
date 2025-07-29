@@ -2,28 +2,30 @@ body {
     background-color: #1a202c;
     color: white;
     margin: 0;
-    padding: 20px;
+    padding: 0;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
+    align-items: center;
+    height: 100vh;
     font-family: Arial, sans-serif;
+    overflow: hidden; /* Prevent any scrolling on desktop */
 }
 
-#main-container {
+/* #main-container {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
     gap: 24px;
-}
+} */
 
 #game-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    width: 100%;
+    gap: 8px;
     user-select: none;
+    height: 95vh;
+    justify-content: space-between;
 }
 
 #game-header {
@@ -45,10 +47,10 @@ body {
     background-color: #808080;
     padding: 2px;
     border-radius: 8px;
-    height: 80vh;
-    width: calc(80vh * 7 / 11);
-    max-width: 98vw;
-    max-height: 98vh;
+    
+    /* Size to fit viewport perfectly */
+    width: min(70vw, calc(80vh * 7 / 11));
+    height: min(80vh, calc(70vw * 11 / 7));
 }
 
 #grid.dimmed {
@@ -66,8 +68,8 @@ body {
     background-color: #4a5568;
     position: relative;
     border-radius: 0.4vw;
-    /* Set a single, responsive base font size that has min/max limits */
-    font-size: clamp(8px, 1.6vw, 16px);
+    /* Better responsive font sizing */
+    font-size: clamp(8px, 1.2vw, 14px);
     font-weight: bold;
 }
 
@@ -160,31 +162,132 @@ body {
 }
 
 #monster-info-panel {
-    width: 280px;
-    background-color: #2d3748;
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
     border-radius: 8px;
-    padding: 16px;
+    padding: 12px; /* Reduced from 16px */
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px; /* Reduced from 12px */
 }
 
 .monster-entry {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 0.9em;
+    gap: 8px; /* Reduced from 12px */
+    font-size: 0.85em; /* Reduced from 0.95em */
     transition: all 0.3s ease;
+    padding: 6px; /* Reduced from 8px */
+    background-color: #2d3748;
+    border-radius: 4px; /* Reduced from 6px */
+    border: 1px solid #4a5568;
 }
+
 .monster-entry.cleared {
-    opacity: 0.5;
-    filter: grayscale(80%);
+    opacity: 0.6;
+    filter: grayscale(60%);
+    background-color: #1a202c;
 }
-.monster-entry .icon { width: 32px; height: 32px; background-size: contain; background-repeat: no-repeat; background-position: center; }
+.monster-entry .icon { 
+    width: 28px; /* Reduced from 32px */
+    height: 28px; /* Reduced from 32px */
+    background-size: contain; 
+    background-repeat: no-repeat; 
+    background-position: center; 
+}
 .monster-entry .details { display: flex; flex-direction: column; flex-grow: 1; }
-.monster-entry .name { font-weight: bold; }
-.monster-entry .stats { color: #a0aec0; }
-.monster-entry .count { margin-left: auto; font-size: 1.1em; font-weight: bold; }
+.monster-entry .name { 
+    font-weight: bold; 
+    color: #f7fafc;
+    font-size: 0.9em; /* Make name smaller */
+}
+
+.monster-entry .stats { 
+    color: #cbd5e0;
+    font-size: 0.8em; /* Reduced from 0.9em */
+}
+
+.monster-entry .count { 
+    margin-left: auto; 
+    font-size: 1em; /* Reduced from 1.1em */
+    font-weight: bold; 
+    color: #63b3ed;
+}
+/* Mobile monster popup */
+#mobile-monster-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+#mobile-monster-popup.hidden {
+    display: none;
+}
+
+.popup-content {
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #4a5568;
+}
+
+.popup-header h3 {
+    margin: 0;
+    color: #f7fafc;
+    font-size: 1.2em;
+}
+
+#close-monster-popup {
+    background: none;
+    border: none;
+    color: #cbd5e0;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#close-monster-popup:hover {
+    color: #f7fafc;
+}
+
+#mobile-monster-list {
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Monster panel button icon */
+#monster-panel-btn img {
+    width: 32px;
+    height: 32px;
+}
 
 .Light-Mage { background-image: url('icons/lightmage.png'); }
 .Dark-Mage { background-image: url('icons/darkmage.png'); }
@@ -257,15 +360,78 @@ body {
 }
 #new-game-btn:hover { background-color: #2b6cb0; }
 
-#game-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 20px; }
+#game-footer { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    width: 100%; 
+    padding: 8px 16px;
+    background-color: #2d3748;
+    border-radius: 8px;
+    margin-top: 8px;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+#health-display { 
+    display: flex; 
+    align-items: center; 
+    font-size: 1.1em; 
+    font-weight: bold;
+    gap: 8px; 
+    color: #e2e8f0;
+}
+
 .footer-btn { background: none; border: none; cursor: pointer; padding: 0; }
 .footer-btn img { width: 40px; height: 40px; }
 .footer-btn.active { background-color: rgba(255, 255, 255, 0.2); border-radius: 8px; }
 
-#health-display { display: flex; align-items: center; font-size: 1em; gap: 6px; }
 #health-display img { width: 24px; height: 24px; }
 
-@media (max-width: 800px) {
-    #main-container { flex-direction: column; align-items: center; }
-    #monster-info-panel { width: 90%; max-width: 400px; }
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    /* Game column - increased height */
+    .col-12.col-lg-9 {
+        height: 100vh; /* Full height since no monster panel */
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 8px;
+    }
+    
+    /* Monster panel column - reduced height */
+    .col-12.col-lg-3 { /* Updated selector */
+        height: 25vh; /* Reduced from 30vh */
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 6px; /* Reduced padding */
+        border-top: 2px solid #4a5568;
+    }
+    
+    #monster-info-panel {
+        height: auto;
+        min-height: calc(25vh - 12px); /* Updated to match new height */
+        padding: 8px; /* Reduced for mobile */
+        gap: 6px; /* Reduced gap */
+    }
+    
+    .monster-entry {
+        font-size: 0.8em; /* Even smaller on mobile */
+        padding: 4px; /* Reduced padding */
+        gap: 6px; /* Reduced gap */
+    }
+    
+    .monster-entry .icon {
+        width: 24px; /* Smaller icons on mobile */
+        height: 24px;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 1200px) {
+    #grid {
+        width: 70vw;
+        height: calc(70vw * 11 / 7);
+    }
 }
