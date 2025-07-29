@@ -408,49 +408,69 @@ body {
 
 #health-display img { width: 24px; height: 24px; }
 
-/* Mobile optimizations */
-@media (max-width: 768px) {
-    /* Game column - increased height */
-    .col-12.col-lg-9 {
-        height: 100vh; /* Full height since no monster panel */
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
+/* --- Mobile & Tablet Responsive Design --- */
+
+/* Styles for small mobile screens (up to 767px) */
+@media (max-width: 767.98px) {
+    #game-container {
+        height: 100vh;
+        width: 100%; /* Ensure container uses full width */
         padding: 8px;
+        box-sizing: border-box;
+        justify-content: space-between;
     }
-    
-    /* Monster panel column - reduced height */
-    .col-12.col-lg-3 { /* Updated selector */
-        height: 25vh; /* Reduced from 30vh */
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding: 6px; /* Reduced padding */
-        border-top: 2px solid #4a5568;
+
+    #grid {
+        height: 100%;
+        width: auto;
+        aspect-ratio: 7 / 11;
+        /* The max-height property has been removed */
     }
-    
-    #monster-info-panel {
-        height: auto;
-        min-height: calc(25vh - 12px); /* Updated to match new height */
-        padding: 8px; /* Reduced for mobile */
-        gap: 6px; /* Reduced gap */
+
+    #grid-wrapper {
+        /* position: relative; */
+        height: 100%;
+        width: auto;
+        aspect-ratio: 7 / 11;
     }
-    
-    .monster-entry {
-        font-size: 0.8em; /* Even smaller on mobile */
-        padding: 4px; /* Reduced padding */
-        gap: 6px; /* Reduced gap */
+
+    .tile {
+        font-size: clamp(10px, 3.5vw, 14px);
     }
-    
-    .monster-entry .icon {
-        width: 24px; /* Smaller icons on mobile */
-        height: 24px;
+
+    #game-footer {
+        padding: 8px 12px;
+    }
+
+    .footer-btn img {
+        width: 36px;
+        height: 36px;
+    }
+
+    #health-display {
+        font-size: 1em;
+    }
+
+    #popup {
+        padding: 20px;
+        width: 90%;
+    }
+
+    #popup-title {
+        font-size: 1.5em;
     }
 }
 
-/* Tablet adjustments */
-@media (min-width: 768px) and (max-width: 1200px) {
+/* Styles for tablets (from 768px up to the 992px desktop breakpoint) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    #game-container {
+        height: 95vh;
+    }
+
     #grid {
-        width: 70vw;
-        height: calc(70vw * 11 / 7);
+        /* On tablets, we have more horizontal space, so we can use the original smart sizing logic */
+        width: min(70vw, calc(80vh * 7 / 11));
+        height: min(80vh, calc(70vw * 11 / 7));
+        aspect-ratio: auto; /* Disable aspect-ratio here since width/height handle it */
     }
 }
