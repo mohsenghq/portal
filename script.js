@@ -62,12 +62,15 @@ function initializeGrid() {
     placeElements();
     updateNumbers();
     
+    // Reveal the center 9 tiles. If they are hidden by an eye, that property will persist.
     for (let j = centerY - 1; j <= centerY + 1; j++) {
         for (let i = centerX - 1; i <= centerX + 1; i++) {
             const index = j * gridSizeX + i;
             if (grid[index]) {
                 grid[index].revealed = true;
-                if (grid[index].type === 'hidden') grid[index].type = 'empty';
+                if (grid[index].type === 'hidden') {
+                    grid[index].type = 'empty';
+                }
             }
         }
     }
@@ -133,65 +136,62 @@ function handleTileClick(index) {
         }
         return;
     }
+    // Prevent action on already defeated/used/flagged tiles
     if (tile.isDefeated || tile.potionUsed || tile.flagged) return;
 
     let numbersNeedUpdating = false;
     let monsterPanelNeedsUpdating = false;
 
-    if (tile.revealed && tile.hasPotion) {
+    // Mark the tile as revealed on any valid click.
+    tile.revealed = true;
+    if (tile.type === 'hidden') tile.type = 'empty'; // Uncover a blank tile
+
+    const isActionable = ['monster', 'eye', 'pit', 'boss'].includes(tile.type);
+
+    if (isActionable) {
+        const isBoss = tile.type === 'boss';
+        if (isBoss && tile.damage > health) {
+            health -= tile.damage;
+            showFloatingText(`-${tile.damage} HP`, index, true);
+            updateDisplay();
+            updateTileDisplay(index);
+            endGame("You Lose!", false);
+            return;
+        }
+
+        health -= tile.damage;
+        tile.isDefeated = true;
+        numbersNeedUpdating = true;
+        monsterPanelNeedsUpdating = true;
+        if (tile.type !== 'pit') showFloatingText(`-${tile.damage} HP`, index, true);
+
+        if (tile.type === 'eye') {
+            revealNumbersAroundEye(index);
+            // After revealing, we need to redraw all tiles to show their real values
+            numbersNeedUpdating = true; // Force number update
+        }
+
+        if (isBoss) {
+            defeatedBossesCount++;
+            if (tile.monsterName === 'Light Mage') { maxHealth += 4; health = maxHealth; showFloatingText("Max Health +4", index); }
+            if (tile.monsterName === 'Dark Mage') { maxHealth += 5; health = maxHealth; showFloatingText("Max Health +5", index); }
+        }
+    } else if (tile.hasPotion) {
+        // Consume potion on click
         health = maxHealth;
         tile.potionUsed = true;
         showFloatingText("Health Restored!", index);
-    } else {
-        tile.revealed = true;
-        if (tile.type === 'hidden') tile.type = 'empty';
-        
-        const isActionable = ['monster', 'eye', 'pit', 'boss'].includes(tile.type);
-        if (isActionable) {
-            const isBoss = tile.type === 'boss';
-
-            if (isBoss) {
-                // If boss damage is greater than current health, you lose.
-                if (tile.damage > health) {
-                    health -= tile.damage;
-                    showFloatingText(`-${tile.damage} HP`, index, true);
-                    updateDisplay();
-                    updateTileDisplay(index);
-                    endGame("You Lose!", false);
-                    return;
-                }
-            }
-            
-            // Apply damage for any monster or boss.
-            health -= tile.damage;
-            tile.isDefeated = true;
-            numbersNeedUpdating = true;
-            monsterPanelNeedsUpdating = true;
-            if(tile.type !== 'pit') showFloatingText(`-${tile.damage} HP`, index, true);
-
-            if (tile.type === 'eye') revealNumbersAroundEye(index);
-            
-            if (isBoss) {
-                defeatedBossesCount++;
-                // Rewards are now added to your max health and health is fully restored.
-                if (tile.monsterName === 'Light Mage') { 
-                    maxHealth += 4; 
-                    health = maxHealth; 
-                    showFloatingText("Max Health +4", index); 
-                }
-                if (tile.monsterName === 'Dark Mage') { 
-                    maxHealth += 5; 
-                    health = maxHealth; 
-                    showFloatingText("Max Health +5", index); 
-                }
-            }
-        }
     }
 
-    if (numbersNeedUpdating) updateNumbers();
-    if (monsterPanelNeedsUpdating) updateMonsterInfoPanel();
-    
+    if (numbersNeedUpdating) {
+        updateNumbers();
+    }
+    if (monsterPanelNeedsUpdating) {
+        updateMonsterInfoPanel();
+    }
+
     updateDisplay();
+    // Full grid redraw is necessary to handle changes around the Eye
     grid.forEach((_, i) => updateTileDisplay(i));
 
     if (health < 0) {
@@ -203,24 +203,30 @@ function handleTileClick(index) {
     }
 }
 
+
 function updateTileDisplay(index) {
     const tileEl = gridEl.children[index];
     const tile = grid[index];
     tileEl.innerHTML = '';
     tileEl.className = 'tile';
 
-    if (tile.flagged) { tileEl.classList.add('flagged'); return; }
-    if (!tile.revealed) { tileEl.classList.add('hidden'); return; }
-    if (tile.isHiddenByEye && !tile.isDefeated) { tileEl.classList.add('empty'); tileEl.innerText = '?'; return; }
-    
+    if (tile.flagged) {
+        tileEl.classList.add('flagged');
+        return;
+    }
+
+    if (!tile.revealed) {
+        tileEl.classList.add('hidden');
+        return;
+    }
+
+    // ALL LOGIC BELOW THIS POINT IS FOR REVEALED TILES
     const isMonsterTile = ['monster', 'boss', 'eye', 'pit'].includes(tile.type);
 
     if (isMonsterTile) {
         tileEl.classList.add('empty');
         const iconClass = tile.type === 'pit' ? 'pit' : tile.monsterName.replace(/\s+/g, '-');
-        
         const positionClass = tile.type === 'pit' ? 'icon-center' : 'icon-top';
-        
         const iconDiv = document.createElement('div');
         iconDiv.className = `${positionClass} ${iconClass}`;
 
@@ -239,7 +245,7 @@ function updateTileDisplay(index) {
                 const valueCenter = document.createElement('span');
                 valueCenter.className = 'value value-center';
                 valueCenter.style.fontSize = '1em';
-                valueCenter.innerText = tile.value;
+                valueCenter.innerText = tile.isHiddenByEye ? '?' : tile.value;
                 tileEl.appendChild(valueCenter);
             }
         } else {
@@ -258,7 +264,7 @@ function updateTileDisplay(index) {
                 if (tile.value >= 0) {
                     const valueCenter = document.createElement('span');
                     valueCenter.className = 'value value-center';
-                    valueCenter.innerText = tile.value;
+                    valueCenter.innerText = tile.isHiddenByEye ? '?' : tile.value;
                     tileEl.appendChild(valueCenter);
                 }
             } else {
@@ -268,7 +274,7 @@ function updateTileDisplay(index) {
                 if (tile.value >= 0) { 
                     const valueBottom = document.createElement('span');
                     valueBottom.className = 'value value-bottom';
-                    valueBottom.innerText = tile.value;
+                    valueBottom.innerText = tile.isHiddenByEye ? '?' : tile.value;
                     tileEl.appendChild(valueBottom);
                 }
             }
@@ -276,7 +282,7 @@ function updateTileDisplay(index) {
              if (tile.value >= 0) { 
                 const valueSpan = document.createElement('span');
                 valueSpan.className = 'value';
-                valueSpan.innerText = tile.value;
+                valueSpan.innerText = tile.isHiddenByEye ? '?' : tile.value;
                 tileEl.appendChild(valueSpan);
             }
         }
