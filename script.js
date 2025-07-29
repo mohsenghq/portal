@@ -136,18 +136,38 @@ function handleTileClick(index) {
         }
         return;
     }
-    // Prevent action on already defeated/used/flagged tiles
     if (tile.isDefeated || tile.potionUsed || tile.flagged) return;
 
     let numbersNeedUpdating = false;
     let monsterPanelNeedsUpdating = false;
-
-    // Mark the tile as revealed on any valid click.
-    tile.revealed = true;
-    if (tile.type === 'hidden') tile.type = 'empty'; // Uncover a blank tile
-
     const isActionable = ['monster', 'eye', 'pit', 'boss'].includes(tile.type);
 
+    // Step 1: Handle revealing and potion usage
+    if (!tile.revealed) {
+        // First click on a hidden tile
+        tile.revealed = true;
+        if (tile.type === 'hidden') tile.type = 'empty';
+        
+        // If it's a potion, the first click just reveals it. We do nothing else.
+        if (tile.hasPotion) {
+            updateDisplay();
+            updateTileDisplay(index);
+            return;
+        }
+    } else {
+        // It's a revealed tile. If it's a potion, use it and we're done.
+        if (tile.hasPotion) {
+            health = maxHealth;
+            tile.potionUsed = true;
+            showFloatingText("Health Restored!", index);
+            updateDisplay();
+            updateTileDisplay(index);
+            return;
+        }
+    }
+
+    // Step 2: If we're still here, it must be an actionable tile (monster/pit/boss)
+    // This code now runs for both pre-revealed monsters and newly-revealed monsters.
     if (isActionable) {
         const isBoss = tile.type === 'boss';
         if (isBoss && tile.damage > health) {
@@ -167,8 +187,7 @@ function handleTileClick(index) {
 
         if (tile.type === 'eye') {
             revealNumbersAroundEye(index);
-            // After revealing, we need to redraw all tiles to show their real values
-            numbersNeedUpdating = true; // Force number update
+            numbersNeedUpdating = true;
         }
 
         if (isBoss) {
@@ -176,13 +195,9 @@ function handleTileClick(index) {
             if (tile.monsterName === 'Light Mage') { maxHealth += 4; health = maxHealth; showFloatingText("Max Health +4", index); }
             if (tile.monsterName === 'Dark Mage') { maxHealth += 5; health = maxHealth; showFloatingText("Max Health +5", index); }
         }
-    } else if (tile.hasPotion) {
-        // Consume potion on click
-        health = maxHealth;
-        tile.potionUsed = true;
-        showFloatingText("Health Restored!", index);
     }
 
+    // Step 3: Update and redraw
     if (numbersNeedUpdating) {
         updateNumbers();
     }
@@ -191,7 +206,6 @@ function handleTileClick(index) {
     }
 
     updateDisplay();
-    // Full grid redraw is necessary to handle changes around the Eye
     grid.forEach((_, i) => updateTileDisplay(i));
 
     if (health < 0) {
