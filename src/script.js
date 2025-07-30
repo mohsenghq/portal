@@ -105,7 +105,7 @@ const ALL_ENTITIES = [...BOSSES, ...MONSTERS, ...SPECIAL_TILES];
 const DIFFICULTY_SETTINGS = {
   easy: {
     name: "Easy",
-    monsterDamageMultiplier: 0.75,
+    monsterDamageMultiplier: 1.0,
     monsterXpMultiplier: 0.8,
     potionCount: 15,
     startingGold: 20,
@@ -119,7 +119,7 @@ const DIFFICULTY_SETTINGS = {
   },
   hard: {
     name: "Hard",
-    monsterDamageMultiplier: 1.25,
+    monsterDamageMultiplier: 1.0,
     monsterXpMultiplier: 1.2,
     potionCount: 9,
     startingGold: 0,
@@ -315,9 +315,7 @@ function placeElements(settings) {
 
     // Apply difficulty and endless loop scaling
     const loopMultiplier = 1 + 0.2 * (currentLoop - 1); // +20% per loop
-    entityInstance.damage = Math.ceil(
-      entityInstance.damage * settings.monsterDamageMultiplier * loopMultiplier
-    );
+    entityInstance.damage = Math.ceil(entityInstance.damage * loopMultiplier);
     entityInstance.xp = Math.ceil(
       (entityInstance.xp || 0) * settings.monsterXpMultiplier
     ); // XP doesn't scale with loops
@@ -740,7 +738,9 @@ function renderProfile() {
         <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-red-400">${
           userProfile.totalKills
         }</div><div class="text-sm text-slate-400">Total Kills</div></div>
-        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-purple-400">${userProfile.level}</div><div class="text-sm text-slate-400">Current Level</div></div>
+        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-purple-400">${
+          userProfile.level
+        }</div><div class="text-sm text-slate-400">Current Level</div></div>
         <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-yellow-400">${
           Object.keys(userProfile.achievements).length
         }</div><div class="text-sm text-slate-400">Achievements</div></div>
@@ -813,10 +813,10 @@ function endGame(title, isWin) {
 
   // --- Render Run Stats ---
   const statsContainer = document.getElementById("run-stats-container");
-statsContainer.innerHTML = ''; // Clear stats by default
+  statsContainer.innerHTML = ""; // Clear stats by default
 
-// Only display stats if a run has actually happened
-if (runStats) {
+  // Only display stats if a run has actually happened
+  if (runStats) {
     const timePlayed = ((Date.now() - runStats.startTime) / 1000).toFixed(1);
     statsContainer.innerHTML = `
         <h3 class="text-lg font-bold text-sky-400 mb-2">Run Summary (Loop ${runStats.loop})</h3>
@@ -827,7 +827,7 @@ if (runStats) {
             <span class="text-slate-400">Damage Taken:</span><span class="text-white font-semibold">${runStats.damageTaken}</span>
         </div>
     `;
-}
+  }
   // --- Render New Game Options ---
   const optionsContainer = document.getElementById("new-game-options");
   optionsContainer.innerHTML = ""; // Clear previous buttons
@@ -960,7 +960,7 @@ function checkAchievements(event) {
     player && // This check prevents an error on the welcome screen
     player.health === player.maxHealth &&
     !userProfile.achievements.PERFECTIONIST
-) {
+  ) {
     userProfile.achievements.PERFECTIONIST = true;
     newAchievement = ACHIEVEMENTS.PERFECTIONIST;
   }
