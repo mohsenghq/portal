@@ -64,11 +64,23 @@
         >
           <header
             id="game-header"
-            class="text-lg font-bold flex items-center gap-2 text-slate-300"
+            class="text-base lg:text-lg font-bold flex items-center justify-center gap-2 text-slate-300 flex-wrap"
           >
+            <button
+              id="profile-btn"
+              class="absolute left-4 top-4 p-2 rounded-lg transition-colors hover:bg-slate-700"
+            >
+              <img src="icons/profile.png" alt="Profile" class="w-8 h-8" />
+            </button>
             <span id="header-text">Hunt and kill</span>
             <span id="boss-name" class="text-sky-400"></span>
             <span id="boss-progress"></span>
+            <div class="w-full h-2 bg-purple-900 rounded-full">
+              <div
+                id="xp-bar"
+                class="h-full bg-purple-500 rounded-full transition-all duration-500"
+              ></div>
+            </div>
           </header>
 
           <div
@@ -86,52 +98,47 @@
             >
               <div
                 id="popup"
-                class="bg-slate-800 p-8 rounded-2xl text-center shadow-2xl flex flex-col gap-4 transform scale-95 transition-all duration-300"
+                class="bg-slate-800 p-6 rounded-2xl text-center shadow-2xl flex flex-col gap-4 transform scale-95 transition-all duration-300 w-full max-w-md"
               >
                 <h2 id="popup-title" class="text-4xl font-extrabold"></h2>
-                <button
-                  id="new-game-btn"
-                  class="px-6 py-3 text-lg font-bold text-white bg-sky-600 rounded-lg cursor-pointer transition-colors hover:bg-sky-500"
-                >
-                  New Game
-                </button>
+
+                <div
+                  id="run-stats-container"
+                  class="text-left bg-slate-900/50 p-4 rounded-lg border border-slate-700"
+                ></div>
+
+                <div
+                  id="new-game-options"
+                  class="flex flex-col gap-2 pt-2"
+                ></div>
               </div>
             </div>
           </div>
 
-          <footer
-            id="game-footer"
-            class="flex justify-between items-center w-full p-2 bg-slate-800/50 rounded-xl mt-2 sticky bottom-4"
-          >
-            <button
-              id="flag-mode-btn"
-              class="footer-btn p-2 rounded-lg transition-colors"
-            >
-              <img src="icons/flag.png" alt="Flag Mode" class="w-10 h-10" />
-            </button>
+          <footer id="game-footer" class="flex justify-between items-center w-full p-2 bg-slate-800/50 rounded-xl mt-2 sticky bottom-4">
+    <div class="flex items-center gap-4">
+        <div id="health-display" class="flex items-center font-bold gap-2 text-slate-200 text-lg">
+            <img src="icons/heart.png" alt="Health" class="w-7 h-7">
+            <span id="health-value"></span>/<span id="max-health"></span>
+        </div>
+        <div id="gold-display" class="flex items-center gap-2 font-bold text-lg text-yellow-400">
+            <img src="icons/gold.png" alt="Gold" class="w-7 h-7">
+            <span id="gold-value"></span>
+        </div>
+    </div>
 
-            <button id="monster-panel-btn" class="footer-btn lg:hidden p-2">
-              <img
-                src="icons/monster.png"
-                alt="Monster Panel"
-                class="w-10 h-10"
-              />
-            </button>
-            <button
-              id="new-game-footer-btn"
-              class="hidden px-5 py-2 text-md font-bold text-white bg-sky-600 rounded-lg cursor-pointer transition-colors hover:bg-sky-500"
-            >
-              New Game
-            </button>
-
-            <div
-              id="health-display"
-              class="flex items-center text-xl font-bold gap-2 text-slate-200"
-            >
-              <img src="icons/heart.png" alt="Health" class="w-7 h-7" />
-              <span id="health-value">6</span>/<span id="max-health">6</span>
-            </div>
-          </footer>
+    <div class="flex items-center gap-4">
+        <div class="font-bold text-slate-200 text-lg">
+            Level <span id="player-level" class="text-green-400">1</span>
+        </div>
+        <button id="flag-mode-btn" class="footer-btn p-1.5 rounded-lg transition-colors">
+            <img src="icons/flag.png" alt="Flag Mode" class="w-8 h-8">
+        </button>
+        <button id="monster-panel-btn" class="footer-btn lg:hidden p-1.5">
+            <img src="icons/monster.png" alt="Monster Panel" class="w-7 h-7">
+        </button>
+    </div>
+</footer>
         </div>
       </div>
 
@@ -167,7 +174,66 @@
         ></div>
       </div>
     </div>
-
+    <div
+      id="profile-modal"
+      class="invisible opacity-0 transition-all duration-300 fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4"
+    >
+      <div
+        id="profile-content"
+        class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col transform scale-95 transition-all duration-300"
+      >
+        <div
+          class="popup-header flex justify-between items-center p-4 border-b border-slate-700"
+        >
+          <h3 class="text-xl font-bold text-slate-100">Player Profile</h3>
+          <button
+            id="close-profile-modal"
+            class="text-3xl text-slate-400 hover:text-white transition-colors"
+          >
+            &times;
+          </button>
+        </div>
+        <div
+          id="profile-stats-list"
+          class="grid grid-cols-2 gap-3 p-4 text-center"
+        ></div>
+        <div class="flex-grow p-4 border-t border-slate-700 overflow-y-auto">
+          <h4 class="text-lg font-bold text-sky-400 mb-2">Achievements</h4>
+          <div id="achievements-list" class="flex flex-col gap-2"></div>
+        </div>
+      </div>
+    </div>
+    <div
+      id="shop-modal"
+      class="invisible opacity-0 transition-all duration-300 fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4"
+    >
+      <div
+        id="shop-content"
+        class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col transform scale-95 transition-all duration-300"
+      >
+        <div
+          class="popup-header flex justify-between items-center p-4 border-b border-slate-700"
+        >
+          <h3 class="text-2xl font-bold text-slate-100">Shop</h3>
+          <div
+            class="flex items-center gap-2 font-bold text-xl text-yellow-400"
+          >
+            <img src="icons/gold.png" class="w-7 h-7" />
+            <span id="shop-gold-display">0</span>
+          </div>
+          <button
+            id="close-shop-modal"
+            class="text-3xl text-slate-400 hover:text-white transition-colors"
+          >
+            &times;
+          </button>
+        </div>
+        <div
+          id="shop-item-list"
+          class="p-4 overflow-y-auto flex flex-col gap-3"
+        ></div>
+      </div>
+    </div>
     <script src="script.js"></script>
   </body>
 </html>

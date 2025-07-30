@@ -3,26 +3,133 @@ const gridSizeY = 11;
 const centerX = Math.floor(gridSizeX / 2);
 const centerY = Math.floor(gridSizeY / 2);
 let health, maxHealth, isFlagMode, defeatedBossesCount;
-
+let player;
+let userProfile = {};
+const ACHIEVEMENTS = {
+  FIRST_WIN: { name: "Novice Adventurer", description: "Win your first game." },
+  SLAYER: { name: "Monster Slayer", description: "Defeat 100 monsters total." },
+  PERFECTIONIST: {
+    name: "Perfectionist",
+    description: "Win a game with full health.",
+  },
+};
 const grid = [];
 const BOSSES = [
-  { name: "Light Mage", damage: 6, amount: 1, type: "boss" },
-  { name: "Dark Mage", damage: 10, amount: 1, type: "boss" },
-  { name: "Golem", damage: 15, amount: 1, type: "boss" },
+  { name: "Light Mage", damage: 6, amount: 1, type: "boss", xp: 50, gold: 6 },
+  { name: "Dark Mage", damage: 10, amount: 1, type: "boss", xp: 100, gold: 10 },
+  { name: "Golem", damage: 15, amount: 1, type: "boss", xp: 200, gold: 15 },
 ];
 const MONSTERS = [
-  { name: "Bug", damage: 1, amount: 5, type: "monster" },
-  { name: "Eye", damage: 8, amount: 1, type: "eye" },
-  { name: "Blue ghost", damage: 3, amount: 4, type: "monster" },
-  { name: "Purple ghost", damage: 7, amount: 1, type: "monster" },
-  { name: "Red ghost", damage: 5, amount: 3, type: "monster" },
-  { name: "Bottomless pit", damage: 100, amount: 8, type: "pit" },
-  { name: "Rat", damage: 2, amount: 5, type: "monster" },
-  { name: "Skeleton", damage: 4, amount: 5, type: "monster" },
-  { name: "Snake", damage: 6, amount: 2, type: "monster" },
+  { name: "Bug", damage: 1, amount: 5, type: "monster", xp: 2, gold: 1 },
+  { name: "Eye", damage: 8, amount: 1, type: "eye", xp: 16, gold: 8 },
+  { name: "Blue ghost", damage: 3, amount: 4, type: "monster", xp: 6, gold: 3 },
+  {
+    name: "Purple ghost",
+    damage: 7,
+    amount: 1,
+    type: "monster",
+    xp: 14,
+    gold: 7,
+  },
+  { name: "Red ghost", damage: 5, amount: 3, type: "monster", xp: 10, gold: 5 },
+  {
+    name: "Bottomless pit",
+    damage: 100,
+    amount: 8,
+    type: "pit",
+    xp: 0,
+    gold: 0,
+  },
+  { name: "Rat", damage: 2, amount: 5, type: "monster", xp: 4, gold: 2 },
+  { name: "Skeleton", damage: 4, amount: 5, type: "monster", xp: 8, gold: 4 },
+  { name: "Snake", damage: 6, amount: 2, type: "monster", xp: 12, gold: 6 },
 ];
-const ALL_ENTITIES = [...BOSSES, ...MONSTERS];
+// Add this new constant for shop items
+const SHOP_ITEMS = [
+  {
+    id: "heal_5",
+    name: "Health Potion",
+    description: "Instantly restore 5 HP.",
+    price: 25,
+    icon: "potion.png",
+    onBuy: (player) => {
+      player.health = Math.min(player.maxHealth, player.health + 5);
+      showFloatingStatText(
+        "+5",
+        document.getElementById("health-display"),
+        "text-green-400"
+      );
+    },
+  },
+  {
+    id: "max_hp_up",
+    name: "Heart Container",
+    description: "Permanently increase Max HP by 2.",
+    price: 75,
+    icon: "heart.png",
+    onBuy: (player) => {
+      player.maxHealth += 2;
+      player.health += 2;
+      showFloatingStatText(
+        "+2 Max",
+        document.getElementById("health-display"),
+        "text-pink-400"
+      );
+    },
+  },
+  {
+    id: "reveal_monster",
+    name: "Spyglass",
+    description: "Reveal one random, hidden monster.",
+    price: 40,
+    icon: "eye.png",
+    onBuy: (player, grid) => {
+      const hiddenMonsters = grid.filter(
+        (t) => !t.revealed && ["monster", "eye", "boss"].includes(t.type)
+      );
+      if (hiddenMonsters.length > 0) {
+        const randomMonster =
+          hiddenMonsters[Math.floor(Math.random() * hiddenMonsters.length)];
+        randomMonster.revealed = true;
+      }
+    },
+  },
+];
 
+// Add a new entity for the Shop itself
+const SPECIAL_TILES = [{ name: "Shop", amount: 1, type: "shop", damage: 0 }];
+
+// Modify ALL_ENTITIES to include this new type
+const ALL_ENTITIES = [...BOSSES, ...MONSTERS, ...SPECIAL_TILES];
+
+const DIFFICULTY_SETTINGS = {
+  easy: {
+    name: "Easy",
+    monsterDamageMultiplier: 0.75,
+    monsterXpMultiplier: 0.8,
+    potionCount: 15,
+    startingGold: 20,
+  },
+  normal: {
+    name: "Normal",
+    monsterDamageMultiplier: 1.0,
+    monsterXpMultiplier: 1.0,
+    potionCount: 12,
+    startingGold: 0,
+  },
+  hard: {
+    name: "Hard",
+    monsterDamageMultiplier: 1.25,
+    monsterXpMultiplier: 1.2,
+    potionCount: 9,
+    startingGold: 0,
+  },
+};
+
+// Add new global state variables
+let currentDifficulty;
+let currentLoop = 1;
+let runStats;
 // DOM Elements
 const healthValueEl = document.getElementById("health-value");
 const maxHealthEl = document.getElementById("max-health");
@@ -44,20 +151,112 @@ const closeMonsterPopup = document.getElementById("close-monster-popup");
 const mobileMonsterList = document.getElementById("mobile-monster-list");
 const headerTextEl = document.getElementById("header-text");
 
+const profileBtn = document.getElementById("profile-btn");
+const profileModal = document.getElementById("profile-modal");
+const closeProfileModalBtn = document.getElementById("close-profile-modal");
+const profileContent = document.getElementById("profile-content");
+
+// --- SHOP LOGIC ---
+const shopModal = document.getElementById("shop-modal");
+const shopContent = document.getElementById("shop-content");
+const closeShopModalBtn = document.getElementById("close-shop-modal");
+
+function openShopModal() {
+  renderShop();
+  shopModal.classList.remove("invisible", "opacity-0");
+  shopContent.classList.remove("scale-95");
+}
+
+function closeShopModal() {
+  shopModal.classList.add("invisible", "opacity-0");
+  shopContent.classList.add("scale-95");
+  // After closing the shop, we might need to update the main display
+  updateDisplay();
+  grid.forEach((_, i) => updateTileDisplay(i));
+}
+
+function renderShop() {
+  const itemListEl = document.getElementById("shop-item-list");
+  const shopGoldEl = document.getElementById("shop-gold-display");
+
+  shopGoldEl.innerText = player.gold;
+  itemListEl.innerHTML = ""; // Clear previous items
+
+  SHOP_ITEMS.forEach((item) => {
+    const canAfford = player.gold >= item.price;
+    const itemEl = document.createElement("div");
+    itemEl.className = `flex items-center gap-4 p-3 rounded-lg bg-slate-900/50 border border-slate-700`;
+    itemEl.innerHTML = `
+            <img src="icons/${
+              item.icon
+            }" class="w-10 h-10 object-contain bg-slate-700 p-1 rounded-md">
+    <div class="flex-grow">
+        <h4 class="font-bold text-lg text-slate-100">${item.name}</h4>
+        <p class="text-sm text-slate-400">${item.description}</p>
+    </div>
+            <button class="buy-btn text-lg font-bold px-5 py-2 rounded-md transition-colors ${
+              canAfford
+                ? "bg-green-600 hover:bg-green-500"
+                : "bg-gray-600 text-gray-400 cursor-not-allowed"
+            }" ${!canAfford ? "disabled" : ""}>
+                ${item.price} G
+            </button>
+        `;
+
+    if (canAfford) {
+      itemEl.querySelector(".buy-btn").addEventListener("click", () => {
+        player.gold -= item.price;
+        item.onBuy(player, grid);
+        showFloatingStatText(
+          `-${item.price}`,
+          document.getElementById("gold-display"),
+          "text-yellow-400"
+        );
+        renderShop(); // Re-render to update gold and button states
+      });
+    }
+
+    itemListEl.appendChild(itemEl);
+  });
+}
+
 // --- Game Initialization & State ---
 
-function initializeGrid() {
-  health = 6;
-  maxHealth = 6;
+function initializeGrid(difficulty = "normal", isNewGame = true) {
+  currentDifficulty = difficulty;
+  const settings = DIFFICULTY_SETTINGS[difficulty];
+
+  if (isNewGame) {
+    currentLoop = 1;
+    // Reset the persistent profile only for a brand new session, if needed
+    // (we are keeping level/xp, so this part is for game-specific stats)
+    player = {
+      health: 6,
+      maxHealth: 6,
+      gold: settings.startingGold,
+    };
+  } else {
+    // Continuing an endless run
+    currentLoop++;
+    player.health = player.maxHealth; // Heal to full for the next loop
+  }
+
+  // Initialize stats for this specific run
+  runStats = {
+    startTime: Date.now(),
+    monstersKilled: 0,
+    goldCollected: 0,
+    damageTaken: 0,
+    loop: currentLoop,
+  };
+
+  // Reset grid and game state
   defeatedBossesCount = 0;
   gridEl.innerHTML = "";
   grid.length = 0;
   gridEl.style.pointerEvents = "auto";
-  gridEl.classList.remove("filter", "brightness-[.4]");
   if (headerTextEl) headerTextEl.style.display = "inline";
-
-  closeEndGamePopup(true); // Close popup without showing footer button
-  newGameFooterBtn.classList.add("hidden");
+  closeEndGamePopup(true);
   isFlagMode = false;
   flagModeBtn.classList.remove("bg-sky-500/50");
 
@@ -80,7 +279,7 @@ function initializeGrid() {
     });
   }
 
-  placeElements();
+  placeElements(settings); // Pass settings to scale monsters
   updateNumbers();
 
   // Reveal center area
@@ -103,7 +302,7 @@ function initializeGrid() {
   updateDisplay();
 }
 
-function placeElements() {
+function placeElements(settings) {
   const startAreaIndices = Array.from(
     { length: 9 },
     (_, i) =>
@@ -111,6 +310,18 @@ function placeElements() {
   );
 
   const placeEntity = (entity, count) => {
+    // Create a copy of the entity to modify its stats for this run
+    const entityInstance = { ...entity };
+
+    // Apply difficulty and endless loop scaling
+    const loopMultiplier = 1 + 0.2 * (currentLoop - 1); // +20% per loop
+    entityInstance.damage = Math.ceil(
+      entityInstance.damage * settings.monsterDamageMultiplier * loopMultiplier
+    );
+    entityInstance.xp = Math.ceil(
+      (entityInstance.xp || 0) * settings.monsterXpMultiplier
+    ); // XP doesn't scale with loops
+
     for (let i = 0; i < count; i++) {
       let index;
       do {
@@ -119,20 +330,23 @@ function placeElements() {
         grid[index].type !== "hidden" ||
         (entity.type === "eye" && startAreaIndices.includes(index))
       );
+
+      // Use the scaled stats from entityInstance
       grid[index] = {
         ...grid[index],
-        type: entity.type,
-        damage: entity.damage,
-        monsterName: entity.name,
+        type: entityInstance.type,
+        damage: entityInstance.damage,
+        monsterName: entityInstance.name,
       };
-      if (entity.type === "eye") hideNumbersAroundEye(index);
+      if (entityInstance.type === "eye") hideNumbersAroundEye(index);
     }
   };
 
   ALL_ENTITIES.forEach((m) => placeEntity(m, m.amount));
 
-  // Place Potions
-  const potionCount = 12;
+  // Use the potion count from settings
+  const potionCount = settings.potionCount;
+
   const guaranteedPotions = 2;
   let placedPotions = 0;
   const safeStartTiles = startAreaIndices.filter(
@@ -161,6 +375,7 @@ function placeElements() {
 
 function handleTileClick(index) {
   const tile = grid[index];
+  // Note: We use isDefeated to also mean "used" for potions
   if (tile.isDefeated || tile.potionUsed || (tile.flagged && !isFlagMode))
     return;
 
@@ -172,64 +387,129 @@ function handleTileClick(index) {
     return;
   }
 
-  let needsUpdate = { numbers: false, panel: false };
-
+  // --- REVEAL LOGIC ---
   if (!tile.revealed) {
     tile.revealed = true;
-    if (tile.type === "hidden") tile.type = "empty";
+    if (tile.type === "hidden") {
+      tile.type = "empty";
+    }
+    // If the revealed tile is a potion, just show it and wait for the next click.
     if (tile.hasPotion) {
       updateTileDisplay(index);
       return;
     }
-  } else if (tile.hasPotion) {
-    health = maxHealth;
-    tile.potionUsed = true;
-    showFloatingText("Health Restored!", index, false);
-    updateDisplay();
-    updateTileDisplay(index);
-    return;
   }
 
-  if (["monster", "eye", "pit", "boss"].includes(tile.type)) {
-    if (tile.type === "boss" && tile.damage > health) {
-      health -= tile.damage;
-      showFloatingText(`-${tile.damage} HP`, index, true);
+  // --- ACTION LOGIC (for already revealed tiles) ---
+  else if (tile.hasPotion && !tile.potionUsed) {
+    player.health = player.maxHealth;
+    tile.potionUsed = true;
+    showFloatingStatText(
+      "Restored!",
+      document.getElementById("health-display"),
+      "text-green-400"
+    );
+  } else if (tile.type === "shop") {
+    openShopModal();
+    return; // Stop processing after opening the shop
+  }
+
+  // --- MONSTER LOGIC ---
+  // This logic is now separate from the reveal logic above.
+  if (
+    ["monster", "eye", "pit", "boss"].includes(tile.type) &&
+    !tile.isDefeated
+  ) {
+    let damageTaken = tile.damage;
+    runStats.damageTaken += damageTaken;
+
+    if (player.health < damageTaken) {
+      player.health -= damageTaken;
       endGame("You Died...", false);
     } else {
-      health -= tile.damage;
-      tile.isDefeated = true;
-      needsUpdate.panel = true;
-      if (tile.type !== "pit")
-        showFloatingText(`-${tile.damage} HP`, index, true);
+      player.health -= damageTaken;
+    }
 
-      if (tile.type === "eye") {
-        revealNumbersAroundEye(index);
+    tile.isDefeated = true;
+
+    const monsterData = ALL_ENTITIES.find((m) => m.name === tile.monsterName);
+    if (monsterData) {
+      userProfile.xp += monsterData.xp;
+      player.gold += monsterData.gold;
+      runStats.goldCollected += monsterData.gold;
+      runStats.monstersKilled++;
+      userProfile.totalKills = (userProfile.totalKills || 0) + 1;
+      saveProfile();
+
+      showFloatingStatText(
+        `-${damageTaken}`,
+        document.getElementById("health-display"),
+        "text-red-400"
+      );
+      if (monsterData.gold > 0)
+        showFloatingStatText(
+          `+${monsterData.gold}`,
+          document.getElementById("gold-display"),
+          "text-yellow-400"
+        );
+      if (monsterData.xp > 0)
+        showFloatingStatText(
+          `+${monsterData.xp}`,
+          document.getElementById("xp-bar"),
+          "text-purple-400"
+        );
+    }
+
+    if (tile.type === "eye") {
+      revealNumbersAroundEye(index);
+    }
+
+    const xpToNextLevel = userProfile.level * 100;
+    if (userProfile.xp >= xpToNextLevel) {
+      userProfile.level++;
+      userProfile.xp -= xpToNextLevel;
+      saveProfile(); // Save progress on level up!
+
+      // Give a reward for the current game
+      player.maxHealth += 2;
+      player.health = player.maxHealth;
+      showFloatingStatText(
+        "Level Up!",
+        document.getElementById("player-level"),
+        "text-green-400"
+      );
+    }
+
+    if (tile.type === "boss") {
+      defeatedBossesCount++;
+      if (tile.monsterName === "Light Mage") {
+        player.maxHealth += 4;
+        player.health = player.maxHealth;
+        showFloatingStatText(
+          "+4 Max HP",
+          document.getElementById("health-display"),
+          "text-green-400"
+        );
       }
-      needsUpdate.numbers = true;
-
-      if (tile.type === "boss") {
-        defeatedBossesCount++;
-        if (tile.monsterName === "Light Mage") {
-          maxHealth += 4;
-          health = maxHealth;
-          showFloatingText("Max Health +4", index);
-        }
-        if (tile.monsterName === "Dark Mage") {
-          maxHealth += 5;
-          health = maxHealth;
-          showFloatingText("Max Health +5", index);
-        }
+      if (tile.monsterName === "Dark Mage") {
+        player.maxHealth += 5;
+        player.health = player.maxHealth;
+        showFloatingStatText(
+          "+5 Max HP",
+          document.getElementById("health-display"),
+          "text-green-400"
+        );
       }
     }
   }
 
-  if (needsUpdate.numbers) updateNumbers();
-  if (needsUpdate.panel) updateMonsterInfoPanel();
-
+  // --- FINAL UPDATES & CHECKS ---
+  updateNumbers();
+  updateMonsterInfoPanel();
   updateDisplay();
   grid.forEach((_, i) => updateTileDisplay(i));
 
-  if (health < 0) {
+  if (player.health < 0) {
     endGame("You Died...", false);
   } else if (tile.monsterName === "Golem" && tile.isDefeated) {
     endGame("You Win!", true);
@@ -297,30 +577,42 @@ function updateTileDisplay(index) {
   }
 
   // --- REVEALED TILE STYLES ---
-  tileEl.classList.add("bg-slate-700");
+  tileEl.classList.add("bg-slate-700", "animate-pop-in");
 
   const isMonster = ["monster", "boss", "eye", "pit"].includes(tile.type);
 
   if (isMonster) {
-        const iconClass = tile.type === 'pit' ? 'pit' : tile.monsterName.replace(/\s+/g, '-');
-        
-        // Set opacity class only if the monster is defeated
-        const opacityClass = tile.isDefeated ? 'opacity-30' : '';
+    const iconClass =
+      tile.type === "pit" ? "pit" : tile.monsterName.replace(/\s+/g, "-");
 
-        // The icon's position is now static and does not change on defeat
-        const positionClass = tile.type === 'pit' ? 'w-4/5 h-4/5' : 'absolute top-0 w-3/5 h-3/5';
-        const iconDiv = `<div class="${positionClass} ${iconClass} bg-contain bg-no-repeat bg-center ${opacityClass} transition-opacity"></div>`;
+    // Set opacity class only if the monster is defeated
+    const opacityClass = tile.isDefeated ? "opacity-30" : "";
 
-        // The damage number's position is also static
-        const damageDiv = tile.type !== 'pit' ? `<span class="absolute bottom-0 text-yellow-400 font-bold text-sm ${opacityClass}">${tile.damage}</span>` : '';
+    // The icon's position is now static and does not change on defeat
+    const positionClass =
+      tile.type === "pit" ? "w-4/5 h-4/5" : "absolute top-0 w-3/5 h-3/5";
+    const iconDiv = `<div class="${positionClass} ${iconClass} bg-contain bg-no-repeat bg-center ${opacityClass} transition-opacity"></div>`;
 
-        // The centered value number is added ONLY when the monster is defeated
-        const valueDiv = tile.isDefeated && tile.value >= 0 ? `<span class="relative z-10 text-white text-base">${tile.isHiddenByEye ? '?' : tile.value}</span>` : '';
+    // The damage number's position is also static
+    const damageDiv =
+      tile.type !== "pit"
+        ? `<span class="absolute bottom-0 text-yellow-400 font-bold text-sm ${opacityClass}">${tile.damage}</span>`
+        : "";
 
-        // Assemble the final HTML. The valueDiv will be an empty string for active monsters.
-        tileEl.innerHTML = `${iconDiv}${damageDiv}${valueDiv}`;
+    // The centered value number is added ONLY when the monster is defeated
+    const valueDiv =
+      tile.isDefeated && tile.value >= 0
+        ? `<span class="relative z-10 text-white text-base">${
+            tile.isHiddenByEye ? "?" : tile.value
+          }</span>`
+        : "";
 
-    } else if (tile.type === 'empty') {
+    // Assemble the final HTML. The valueDiv will be an empty string for active monsters.
+    tileEl.innerHTML = `${iconDiv}${damageDiv}${valueDiv}`;
+  } else if (tile.type === "shop") {
+    // Show a shop icon. It has no threat value.
+    tileEl.innerHTML = `<div class="w-4/5 h-4/5 bg-contain bg-center bg-no-repeat" style="background-image: url('icons/shop.png');"></div>`;
+  } else if (tile.type === "empty") {
     if (tile.hasPotion) {
       if (tile.potionUsed) {
         // MODIFIED: Faded icon in center, opaque number on top
@@ -392,17 +684,89 @@ function updateMonsterInfoPanel() {
 }
 
 function updateDisplay() {
-  healthValueEl.innerText = Math.max(0, health);
-  maxHealthEl.innerText = maxHealth;
+  // Health
+  healthValueEl.innerText = Math.max(0, player.health);
+  maxHealthEl.innerText = player.maxHealth;
+
+  const goldValueEl = document.getElementById("gold-value");
+  if (goldValueEl) {
+    goldValueEl.innerText = player.gold;
+  }
+  // --- END NEW ---
+
+  // Level and XP
+  const playerLevelEl = document.getElementById("player-level");
+  if (playerLevelEl) playerLevelEl.innerText = userProfile.level;
+
+  const xpBarEl = document.getElementById("xp-bar");
+  if (xpBarEl) {
+    const xpToNextLevel = userProfile.level * 100;
+    const xpPercentage =
+      xpToNextLevel > 0 ? (userProfile.xp / xpToNextLevel) * 100 : 0;
+    xpBarEl.style.width = `${xpPercentage}%`;
+  }
+
+  // Boss Info
   const currentBoss = BOSSES[defeatedBossesCount];
   if (currentBoss) {
-    if (headerTextEl) headerTextEl.style.display = "inline"; // Add this line
     bossNameEl.innerText = currentBoss.name;
     bossProgressEl.innerText = `(${defeatedBossesCount}/3)`;
   } else {
-    if (headerTextEl) headerTextEl.style.display = "none"; // Add this line
     bossNameEl.innerText = "All Bosses Cleared!";
     bossProgressEl.innerText = `(3/3)`;
+  }
+}
+
+function openProfileModal() {
+  renderProfile(); // Populate with latest data before showing
+  profileModal.classList.remove("invisible", "opacity-0");
+  profileContent.classList.remove("scale-95");
+}
+
+function closeProfileModal() {
+  profileModal.classList.add("invisible", "opacity-0");
+  profileContent.classList.add("scale-95");
+}
+
+function renderProfile() {
+  const statsList = document.getElementById("profile-stats-list");
+  const achievementsList = document.getElementById("achievements-list");
+
+  // Render Stats
+  statsList.innerHTML = `
+        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-green-400">${
+          userProfile.wins
+        }</div><div class="text-sm text-slate-400">Games Won</div></div>
+        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-red-400">${
+          userProfile.totalKills
+        }</div><div class="text-sm text-slate-400">Total Kills</div></div>
+        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-purple-400">${userProfile.level}</div><div class="text-sm text-slate-400">Current Level</div></div>
+        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-yellow-400">${
+          Object.keys(userProfile.achievements).length
+        }</div><div class="text-sm text-slate-400">Achievements</div></div>
+    `;
+
+  // Render Achievements
+  achievementsList.innerHTML = ""; // Clear old list
+  for (const key in ACHIEVEMENTS) {
+    const ach = ACHIEVEMENTS[key];
+    const isUnlocked = userProfile.achievements[key];
+
+    achievementsList.innerHTML += `
+            <div class="flex items-center gap-3 p-2 rounded-md transition-all ${
+              isUnlocked ? "bg-yellow-600/20" : "bg-slate-700 opacity-60"
+            }">
+                <img src="icons/achievement_${
+                  isUnlocked ? "unlocked" : "locked"
+                }.png" class="w-10 h-10">
+                <div>
+                    <h5 class="font-bold ${
+                      isUnlocked ? "text-yellow-400" : "text-slate-300"
+                    }">${ach.name}</h5>
+                    <p class="text-sm text-slate-400">${ach.description}</p>
+                </div>
+            </div>
+        `;
   }
 }
 
@@ -438,20 +802,70 @@ function resizeGrid() {
 // --- Popups and Modals ---
 
 function endGame(title, isWin) {
-  if (!gameOverContainer.classList.contains("visible")) {
-    gridEl.style.pointerEvents = "none";
-    gridEl.classList.add("filter", "brightness-[.4]");
+  if (gameOverContainer.classList.contains("visible")) return; // Prevent double trigger
 
-    popupTitleEl.innerText = title;
-    popupTitleEl.className = `text-4xl font-extrabold ${
-      isWin ? "text-green-400" : "text-red-500"
-    }`;
-
-    gameOverContainer.classList.remove("invisible", "opacity-0");
-    gameOverContainer.classList.add("visible", "opacity-100");
-    popupEl.classList.remove("scale-95");
-    popupEl.classList.add("scale-100");
+  // --- Save Profile ---
+  if (isWin) {
+    userProfile.wins = (userProfile.wins || 0) + 1;
+    checkAchievements("win");
   }
+  saveProfile();
+
+  // --- Render Run Stats ---
+  const statsContainer = document.getElementById("run-stats-container");
+statsContainer.innerHTML = ''; // Clear stats by default
+
+// Only display stats if a run has actually happened
+if (runStats) {
+    const timePlayed = ((Date.now() - runStats.startTime) / 1000).toFixed(1);
+    statsContainer.innerHTML = `
+        <h3 class="text-lg font-bold text-sky-400 mb-2">Run Summary (Loop ${runStats.loop})</h3>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <span class="text-slate-400">Time Played:</span><span class="text-white font-semibold">${timePlayed}s</span>
+            <span class="text-slate-400">Monsters Slain:</span><span class="text-white font-semibold">${runStats.monstersKilled}</span>
+            <span class="text-slate-400">Gold Collected:</span><span class="text-white font-semibold">${runStats.goldCollected}</span>
+            <span class="text-slate-400">Damage Taken:</span><span class="text-white font-semibold">${runStats.damageTaken}</span>
+        </div>
+    `;
+}
+  // --- Render New Game Options ---
+  const optionsContainer = document.getElementById("new-game-options");
+  optionsContainer.innerHTML = ""; // Clear previous buttons
+
+  // If it's a win and it was the Golem, show Endless Mode option
+  const isGolemWin =
+    isWin && grid.find((t) => t.monsterName === "Golem" && t.isDefeated);
+  if (isGolemWin) {
+    const continueBtn = document.createElement("button");
+    continueBtn.className =
+      "px-6 py-3 text-lg font-bold text-white bg-purple-600 rounded-lg cursor-pointer transition-colors hover:bg-purple-500";
+    continueBtn.innerText = `Continue to Loop ${currentLoop + 1}`;
+    continueBtn.addEventListener("click", () =>
+      initializeGrid(currentDifficulty, false)
+    ); // false = not a new game
+    optionsContainer.appendChild(continueBtn);
+    optionsContainer.innerHTML += `<p class="text-sm text-slate-400 my-2">Or start a new game:</p>`;
+  }
+
+  // Show difficulty options
+  Object.keys(DIFFICULTY_SETTINGS).forEach((key) => {
+    const btn = document.createElement("button");
+    btn.className =
+      "px-6 py-2 text-md font-bold text-white bg-sky-700 rounded-lg cursor-pointer transition-colors hover:bg-sky-600";
+    btn.innerText = DIFFICULTY_SETTINGS[key].name;
+    btn.addEventListener("click", () => initializeGrid(key, true)); // true = is a new game
+    optionsContainer.appendChild(btn);
+  });
+
+  // --- Show the Popup ---
+  gridEl.style.pointerEvents = "none";
+  gridEl.classList.add("filter", "brightness-[.4]");
+  popupTitleEl.innerText = title;
+  popupTitleEl.className = `text-4xl font-extrabold ${
+    isWin ? "text-green-400" : "text-red-500"
+  }`;
+  gameOverContainer.classList.remove("invisible", "opacity-0");
+  popupEl.classList.remove("scale-95");
 }
 
 function closeEndGamePopup(isNewGame = false) {
@@ -479,27 +893,25 @@ function hideMobileMonsterPanel() {
   mobilePopupContent.classList.add("scale-95");
 }
 
-function showFloatingText(text, tileIndex, isDamage = false) {
+function showFloatingStatText(text, targetElement, colorClass) {
+  if (!targetElement) return; // Don't run if the target element doesn't exist
+
   const textEl = document.createElement("div");
   textEl.innerText = text;
-  textEl.className = `absolute text-xl font-bold pointer-events-none z-[100] transition-all duration-[2s] ease-out`;
-  textEl.style.color = isDamage ? "#f87171" : "#4ade80"; // red-400 or green-400
-  textEl.style.textShadow = "1px 1px 2px rgba(0,0,0,0.5)";
 
-  const tileRect = gridEl.children[tileIndex].getBoundingClientRect();
-  const gridRect = gridWrapper.getBoundingClientRect();
+  // Use our new, cleaner animation class
+  textEl.className = `absolute text-xl font-bold pointer-events-none z-[200] ${colorClass} animate-float-up`;
+  textEl.style.textShadow = "1px 1px 2px rgba(0,0,0,0.7)";
 
-  textEl.style.left = `${tileRect.left - gridRect.left + tileRect.width / 2}px`;
-  textEl.style.top = `${tileRect.top - gridRect.top + tileRect.height / 2}px`;
-  textEl.style.transform = "translate(-50%, -50%)";
+  // We append to the document body to make sure it can be positioned anywhere on screen
+  document.body.appendChild(textEl);
 
-  gridWrapper.appendChild(textEl);
+  // Position the text over the target UI element
+  const rect = targetElement.getBoundingClientRect();
+  textEl.style.left = `${rect.left + rect.width / 2}px`;
+  textEl.style.top = `${rect.top}px`;
 
-  requestAnimationFrame(() => {
-    textEl.style.opacity = "0";
-    textEl.style.transform = "translate(-50%, -200%)";
-  });
-
+  // Clean up the element after the animation finishes
   setTimeout(() => textEl.remove(), 2000);
 }
 
@@ -516,6 +928,7 @@ function hideNumbersAroundEye(eyeIndex) {
         grid[ny * gridSizeX + nx].isHiddenByEye = true;
     }
 }
+
 function revealNumbersAroundEye(eyeIndex) {
   const y = Math.floor(eyeIndex / gridSizeX),
     x = eyeIndex % gridSizeX;
@@ -529,9 +942,68 @@ function revealNumbersAroundEye(eyeIndex) {
     }
 }
 
+function checkAchievements(event) {
+  let newAchievement = null;
+
+  if (event === "win" && !userProfile.achievements.FIRST_WIN) {
+    userProfile.achievements.FIRST_WIN = true;
+    newAchievement = ACHIEVEMENTS.FIRST_WIN;
+  }
+
+  if (userProfile.totalKills >= 100 && !userProfile.achievements.SLAYER) {
+    userProfile.achievements.SLAYER = true;
+    newAchievement = ACHIEVEMENTS.SLAYER;
+  }
+
+  if (
+    event === "win" &&
+    player && // This check prevents an error on the welcome screen
+    player.health === player.maxHealth &&
+    !userProfile.achievements.PERFECTIONIST
+) {
+    userProfile.achievements.PERFECTIONIST = true;
+    newAchievement = ACHIEVEMENTS.PERFECTIONIST;
+  }
+
+  if (newAchievement) {
+    // Code to show a fancy "Achievement Unlocked!" popup
+    console.log(`Achievement Unlocked: ${newAchievement.name}`);
+    saveProfile();
+  }
+}
+
+function loadProfile() {
+  const savedProfile = localStorage.getItem("lostDogsProfile");
+  if (savedProfile) {
+    userProfile = JSON.parse(savedProfile);
+
+    // --- FIX: Add default values if they are missing from an old save ---
+    if (userProfile.level === undefined) {
+      userProfile.level = 1;
+    }
+    if (userProfile.xp === undefined) {
+      userProfile.xp = 0;
+    }
+    // --- End of fix ---
+  } else {
+    // Default profile for a brand new user
+    userProfile = {
+      wins: 0,
+      totalKills: 0,
+      level: 1,
+      xp: 0,
+      achievements: {},
+    };
+  }
+}
+
+function saveProfile() {
+  localStorage.setItem("lostDogsProfile", JSON.stringify(userProfile));
+}
+
 // --- Event Listeners ---
-newGameBtn.addEventListener("click", initializeGrid);
-newGameFooterBtn.addEventListener("click", initializeGrid);
+// newGameBtn.addEventListener("click", initializeGrid);
+// newGameFooterBtn.addEventListener("click", initializeGrid);
 
 flagModeBtn.addEventListener("click", () => {
   isFlagMode = !isFlagMode;
@@ -550,5 +1022,17 @@ gameOverContainer.addEventListener("click", (e) => {
 
 window.addEventListener("resize", resizeGrid);
 
+profileBtn.addEventListener("click", openProfileModal);
+closeProfileModalBtn.addEventListener("click", closeProfileModal);
+profileModal.addEventListener("click", (e) => {
+  if (e.target === profileModal) closeProfileModal();
+});
+
+closeShopModalBtn.addEventListener("click", closeShopModal);
+shopModal.addEventListener("click", (e) => {
+  if (e.target === shopModal) closeShopModal();
+});
+
 // Initial load
-initializeGrid();
+loadProfile();
+endGame("Welcome!", true);

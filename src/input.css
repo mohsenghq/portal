@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+@keyframes pop-in {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop-in {
+  animation: pop-in 0.3s ease-out forwards;
+}
+@keyframes float-and-spin {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -250%) scale(0) rotate(360deg); opacity: 0; }
+}
+.animate-float-spin { animation: float-and-spin 1.5s ease-out forwards; }
+
+@keyframes float-and-shake {
+    0%, 100% { transform: translate(-50%, -50%); opacity: 1; }
+    25% { transform: translate(-55%, -60%) rotate(-5deg); }
+    50% { transform: translate(-45%, -70%) rotate(5deg); }
+    75% { transform: translate(-50%, -150%); opacity: 1; }
+    100% { transform: translate(-50%, -200%); opacity: 0; }
+}
+.animate-float-shake { animation: float-and-shake 1.5s ease-out forwards; }
+
+@keyframes float-and-zoom {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    50% { transform: translate(-50%, -100%) scale(1.2); opacity: 1; }
+    100% { transform: translate(-50%, -200%) scale(0); opacity: 0; }
+}
+.animate-float-zoom { animation: float-and-zoom 1.5s ease-in-out forwards; }
+
+@keyframes float-up-and-fade {
+      from {
+        transform: translate(-50%, 0);
+        opacity: 1;
+      }
+      to {
+        transform: translate(-50%, -60px);
+        opacity: 0;
+      }
+    }
+.animate-float-up {
+    animation: float-up-and-fade 2s ease-out forwards;
+}
