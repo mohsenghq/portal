@@ -302,26 +302,25 @@ function updateTileDisplay(index) {
   const isMonster = ["monster", "boss", "eye", "pit"].includes(tile.type);
 
   if (isMonster) {
-    const iconClass =
-      tile.type === "pit" ? "pit" : tile.monsterName.replace(/\s+/g, "-");
-    const positionClass =
-      tile.type === "pit" ? "w-4/5 h-4/5" : "absolute top-0 w-3/5 h-3/5";
-    const opacityClass = tile.isDefeated ? "opacity-30" : "";
+        const iconClass = tile.type === 'pit' ? 'pit' : tile.monsterName.replace(/\s+/g, '-');
+        
+        // Set opacity class only if the monster is defeated
+        const opacityClass = tile.isDefeated ? 'opacity-30' : '';
 
-    const iconDiv = `<div class="${positionClass} ${iconClass} bg-contain bg-no-repeat bg-center ${opacityClass} transition-opacity"></div>`;
-    const damageDiv =
-      tile.type !== "pit"
-        ? `<span class="absolute bottom-0 text-yellow-400 font-bold text-sm ${opacityClass}">${tile.damage}</span>`
-        : "";
-    const valueDiv =
-      tile.isDefeated && tile.value >= 0
-        ? `<span class="text-white text-base" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7)">${
-            tile.isHiddenByEye ? "?" : tile.value
-          }</span>`
-        : "";
+        // The icon's position is now static and does not change on defeat
+        const positionClass = tile.type === 'pit' ? 'w-4/5 h-4/5' : 'absolute top-0 w-3/5 h-3/5';
+        const iconDiv = `<div class="${positionClass} ${iconClass} bg-contain bg-no-repeat bg-center ${opacityClass} transition-opacity"></div>`;
 
-    tileEl.innerHTML = `${iconDiv}${damageDiv}${valueDiv}`;
-  } else if (tile.type === "empty") {
+        // The damage number's position is also static
+        const damageDiv = tile.type !== 'pit' ? `<span class="absolute bottom-0 text-yellow-400 font-bold text-sm ${opacityClass}">${tile.damage}</span>` : '';
+
+        // The centered value number is added ONLY when the monster is defeated
+        const valueDiv = tile.isDefeated && tile.value >= 0 ? `<span class="relative z-10 text-white text-base">${tile.isHiddenByEye ? '?' : tile.value}</span>` : '';
+
+        // Assemble the final HTML. The valueDiv will be an empty string for active monsters.
+        tileEl.innerHTML = `${iconDiv}${damageDiv}${valueDiv}`;
+
+    } else if (tile.type === 'empty') {
     if (tile.hasPotion) {
       if (tile.potionUsed) {
         // MODIFIED: Faded icon in center, opaque number on top
