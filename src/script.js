@@ -42,6 +42,7 @@ const mobileMonsterPopup = document.getElementById('mobile-monster-popup');
 const mobilePopupContent = mobileMonsterPopup.querySelector('.popup-content');
 const closeMonsterPopup = document.getElementById('close-monster-popup');
 const mobileMonsterList = document.getElementById('mobile-monster-list');
+const headerTextEl = document.getElementById('header-text');
 
 // --- Game Initialization & State ---
 
@@ -50,6 +51,7 @@ function initializeGrid() {
     gridEl.innerHTML = ''; grid.length = 0;
     gridEl.style.pointerEvents = 'auto';
     gridEl.classList.remove('filter', 'brightness-[.4]');
+    if(headerTextEl) headerTextEl.style.display = 'inline';
     
     closeEndGamePopup(true); // Close popup without showing footer button
     newGameFooterBtn.classList.add('hidden');
@@ -231,7 +233,7 @@ function updateTileDisplay(index) {
     tileEl.innerHTML = '';
     
     // Base classes for all tiles
-    const baseClasses = ['relative', 'aspect-square', 'flex', 'items-center', 'justify-center', 'cursor-pointer', 'rounded-md', 'transition-all', 'duration-200', 'font-bold', 'text-base', 'select-none'];
+    const baseClasses = ['relative', 'aspect-square', 'flex', 'items-center', 'justify-center', 'cursor-pointer', 'rounded-sm', 'transition-all', 'duration-200', 'font-bold', 'text-base', 'select-none'];
     tileEl.className = baseClasses.join(' ');
 
     if (tile.flagged) {
@@ -257,20 +259,26 @@ function updateTileDisplay(index) {
 
         const iconDiv = `<div class="${positionClass} ${iconClass} bg-contain bg-no-repeat bg-center ${opacityClass} transition-opacity"></div>`;
         const damageDiv = tile.type !== 'pit' ? `<span class="absolute bottom-0 text-yellow-400 font-bold text-sm ${opacityClass}">${tile.damage}</span>` : '';
-        const valueDiv = tile.isDefeated && tile.value >= 0 ? `<span class="text-white text-base">${tile.isHiddenByEye ? '?' : tile.value}</span>` : '';
+        const valueDiv = tile.isDefeated && tile.value >= 0 ? `<span class="text-white text-base" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.7)">${tile.isHiddenByEye ? '?' : tile.value}</span>` : '';
+
         
         tileEl.innerHTML = `${iconDiv}${damageDiv}${valueDiv}`;
 
     } else if (tile.type === 'empty') {
         if (tile.hasPotion) {
             if (tile.potionUsed) {
-                if(tile.value >= 0) tileEl.innerHTML = `<span class="text-white text-base">${tile.isHiddenByEye ? '?' : tile.value}</span>`;
+                // MODIFIED: Faded icon in center, opaque number on top
+                const potionIcon = `<div class="potion-icon absolute inset-0 opacity-30"></div>`;
+                const valueText = tile.value >= 0 ? `<span class="relative z-10 text-white text-base">${tile.isHiddenByEye ? '?' : tile.value}</span>` : '';
+                tileEl.innerHTML = `${potionIcon}${valueText}`;
             } else {
+                // Unused Potion: Icon at top, value at bottom
                 const potionIcon = `<div class="potion-icon absolute top-0 w-[65%] h-[65%]"></div>`;
                 const valueText = tile.value >= 0 ? `<span class="absolute bottom-0 text-xs text-white">${tile.isHiddenByEye ? '?' : tile.value}</span>` : '';
                 tileEl.innerHTML = `${potionIcon}${valueText}`;
             }
         } else {
+            // No potion, just the number
             if(tile.value >= 0) tileEl.innerHTML = `<span class="text-white text-base">${tile.isHiddenByEye ? '?' : tile.value}</span>`;
         }
     }
@@ -305,9 +313,11 @@ function updateDisplay() {
     maxHealthEl.innerText = maxHealth;
     const currentBoss = BOSSES[defeatedBossesCount];
     if (currentBoss) {
+        if(headerTextEl) headerTextEl.style.display = 'inline'; // Add this line
         bossNameEl.innerText = currentBoss.name;
         bossProgressEl.innerText = `(${defeatedBossesCount}/3)`;
     } else {
+        if(headerTextEl) headerTextEl.style.display = 'none'; // Add this line
         bossNameEl.innerText = "All Bosses Cleared!";
         bossProgressEl.innerText = `(3/3)`;
     }
@@ -365,6 +375,7 @@ function closeEndGamePopup(isNewGame = false) {
     gameOverContainer.classList.add('invisible', 'opacity-0');
     popupEl.classList.remove('scale-100');
     popupEl.classList.add('scale-95');
+    gridEl.classList.remove('brightness-[.4]');
     if (!isNewGame) {
         newGameFooterBtn.classList.remove('hidden');
     }
