@@ -15,92 +15,23 @@ const ACHIEVEMENTS = {
 };
 const grid = [];
 const BOSSES = [
-  { name: "Light Mage", damage: 6, amount: 1, type: "boss", xp: 50, gold: 6 },
-  { name: "Dark Mage", damage: 10, amount: 1, type: "boss", xp: 100, gold: 10 },
-  { name: "Golem", damage: 15, amount: 1, type: "boss", xp: 200, gold: 15 },
+  { name: "Light Mage", damage: 6, amount: 1, type: "boss", xp: 50 },
+  { name: "Dark Mage", damage: 10, amount: 1, type: "boss", xp: 100 },
+  { name: "Golem", damage: 15, amount: 1, type: "boss", xp: 200 },
 ];
 const MONSTERS = [
-  { name: "Bug", damage: 1, amount: 5, type: "monster", xp: 2, gold: 1 },
-  { name: "Eye", damage: 8, amount: 1, type: "eye", xp: 16, gold: 8 },
-  { name: "Blue ghost", damage: 3, amount: 4, type: "monster", xp: 6, gold: 3 },
-  {
-    name: "Purple ghost",
-    damage: 7,
-    amount: 1,
-    type: "monster",
-    xp: 14,
-    gold: 7,
-  },
-  { name: "Red ghost", damage: 5, amount: 3, type: "monster", xp: 10, gold: 5 },
-  {
-    name: "Bottomless pit",
-    damage: 100,
-    amount: 8,
-    type: "pit",
-    xp: 0,
-    gold: 0,
-  },
-  { name: "Rat", damage: 2, amount: 5, type: "monster", xp: 4, gold: 2 },
-  { name: "Skeleton", damage: 4, amount: 5, type: "monster", xp: 8, gold: 4 },
-  { name: "Snake", damage: 6, amount: 2, type: "monster", xp: 12, gold: 6 },
-];
-// Add this new constant for shop items
-const SHOP_ITEMS = [
-  {
-    id: "heal_5",
-    name: "Health Potion",
-    description: "Instantly restore 5 HP.",
-    price: 25,
-    icon: "potion.png",
-    onBuy: (player) => {
-      player.health = Math.min(player.maxHealth, player.health + 5);
-      showFloatingStatText(
-        "+5",
-        document.getElementById("health-display"),
-        "text-green-400"
-      );
-    },
-  },
-  {
-    id: "max_hp_up",
-    name: "Heart Container",
-    description: "Permanently increase Max HP by 2.",
-    price: 75,
-    icon: "heart.png",
-    onBuy: (player) => {
-      player.maxHealth += 2;
-      player.health += 2;
-      showFloatingStatText(
-        "+2 Max",
-        document.getElementById("health-display"),
-        "text-pink-400"
-      );
-    },
-  },
-  {
-    id: "reveal_monster",
-    name: "Spyglass",
-    description: "Reveal one random, hidden monster.",
-    price: 40,
-    icon: "eye.png",
-    onBuy: (player, grid) => {
-      const hiddenMonsters = grid.filter(
-        (t) => !t.revealed && ["monster", "eye", "boss"].includes(t.type)
-      );
-      if (hiddenMonsters.length > 0) {
-        const randomMonster =
-          hiddenMonsters[Math.floor(Math.random() * hiddenMonsters.length)];
-        randomMonster.revealed = true;
-      }
-    },
-  },
+  { name: "Bug", damage: 1, amount: 5, type: "monster", xp: 2 },
+  { name: "Eye", damage: 8, amount: 1, type: "eye", xp: 16 },
+  { name: "Blue ghost", damage: 3, amount: 4, type: "monster", xp: 6 },
+  { name: "Purple ghost", damage: 7, amount: 1, type: "monster", xp: 14 },
+  { name: "Red ghost", damage: 5, amount: 3, type: "monster", xp: 10 },
+  { name: "Bottomless pit", damage: 100, amount: 8, type: "pit", xp: 0 },
+  { name: "Rat", damage: 2, amount: 5, type: "monster", xp: 4 },
+  { name: "Skeleton", damage: 4, amount: 5, type: "monster", xp: 8 },
+  { name: "Snake", damage: 6, amount: 2, type: "monster", xp: 12 },
 ];
 
-// Add a new entity for the Shop itself
-const SPECIAL_TILES = [{ name: "Shop", amount: 1, type: "shop", damage: 0 }];
-
-// Modify ALL_ENTITIES to include this new type
-const ALL_ENTITIES = [...BOSSES, ...MONSTERS, ...SPECIAL_TILES];
+const ALL_ENTITIES = [...BOSSES, ...MONSTERS];
 
 const DIFFICULTY_SETTINGS = {
   easy: {
@@ -108,21 +39,18 @@ const DIFFICULTY_SETTINGS = {
     monsterDamageMultiplier: 1.0,
     monsterXpMultiplier: 0.8,
     potionCount: 15,
-    startingGold: 20,
   },
   normal: {
     name: "Normal",
     monsterDamageMultiplier: 1.0,
     monsterXpMultiplier: 1.0,
     potionCount: 12,
-    startingGold: 0,
   },
   hard: {
     name: "Hard",
     monsterDamageMultiplier: 1.0,
     monsterXpMultiplier: 1.2,
     potionCount: 9,
-    startingGold: 0,
   },
 };
 
@@ -148,78 +76,12 @@ const monsterPanelBtn = document.getElementById("monster-panel-btn");
 const mobileMonsterPopup = document.getElementById("mobile-monster-popup");
 const mobilePopupContent = mobileMonsterPopup.querySelector(".popup-content");
 const closeMonsterPopup = document.getElementById("close-monster-popup");
-const mobileMonsterList = document.getElementById("mobile-monster-list");
 const headerTextEl = document.getElementById("header-text");
 
 const profileBtn = document.getElementById("profile-btn");
 const profileModal = document.getElementById("profile-modal");
 const closeProfileModalBtn = document.getElementById("close-profile-modal");
 const profileContent = document.getElementById("profile-content");
-
-// --- SHOP LOGIC ---
-const shopModal = document.getElementById("shop-modal");
-const shopContent = document.getElementById("shop-content");
-const closeShopModalBtn = document.getElementById("close-shop-modal");
-
-function openShopModal() {
-  renderShop();
-  shopModal.classList.remove("invisible", "opacity-0");
-  shopContent.classList.remove("scale-95");
-}
-
-function closeShopModal() {
-  shopModal.classList.add("invisible", "opacity-0");
-  shopContent.classList.add("scale-95");
-  // After closing the shop, we might need to update the main display
-  updateDisplay();
-  grid.forEach((_, i) => updateTileDisplay(i));
-}
-
-function renderShop() {
-  const itemListEl = document.getElementById("shop-item-list");
-  const shopGoldEl = document.getElementById("shop-gold-display");
-
-  shopGoldEl.innerText = player.gold;
-  itemListEl.innerHTML = ""; // Clear previous items
-
-  SHOP_ITEMS.forEach((item) => {
-    const canAfford = player.gold >= item.price;
-    const itemEl = document.createElement("div");
-    itemEl.className = `flex items-center gap-4 p-3 rounded-lg bg-slate-900/50 border border-slate-700`;
-    itemEl.innerHTML = `
-            <img src="icons/${
-              item.icon
-            }" class="w-10 h-10 object-contain bg-slate-700 p-1 rounded-md">
-    <div class="flex-grow">
-        <h4 class="font-bold text-lg text-slate-100">${item.name}</h4>
-        <p class="text-sm text-slate-400">${item.description}</p>
-    </div>
-            <button class="buy-btn text-lg font-bold px-5 py-2 rounded-md transition-colors ${
-              canAfford
-                ? "bg-green-600 hover:bg-green-500"
-                : "bg-gray-600 text-gray-400 cursor-not-allowed"
-            }" ${!canAfford ? "disabled" : ""}>
-                ${item.price} G
-            </button>
-        `;
-
-    if (canAfford) {
-      itemEl.querySelector(".buy-btn").addEventListener("click", () => {
-        player.gold -= item.price;
-        item.onBuy(player, grid);
-        showFloatingStatText(
-          `-${item.price}`,
-          document.getElementById("gold-display"),
-          "text-yellow-400"
-        );
-        renderShop(); // Re-render to update gold and button states
-      });
-    }
-
-    itemListEl.appendChild(itemEl);
-  });
-}
-
 // --- Game Initialization & State ---
 
 function initializeGrid(difficulty = "normal", isNewGame = true) {
@@ -233,7 +95,6 @@ function initializeGrid(difficulty = "normal", isNewGame = true) {
     player = {
       health: 6,
       maxHealth: 6,
-      gold: settings.startingGold,
     };
   } else {
     // Continuing an endless run
@@ -245,7 +106,6 @@ function initializeGrid(difficulty = "normal", isNewGame = true) {
   runStats = {
     startTime: Date.now(),
     monstersKilled: 0,
-    goldCollected: 0,
     damageTaken: 0,
     loop: currentLoop,
   };
@@ -300,6 +160,97 @@ function initializeGrid(difficulty = "normal", isNewGame = true) {
   updateMonsterInfoPanel();
   grid.forEach((_, index) => updateTileDisplay(index));
   updateDisplay();
+}
+
+function placeElements(settings) {
+  const startAreaIndices = Array.from(
+    { length: 9 },
+    (_, i) =>
+      (centerY - 1 + Math.floor(i / 3)) * gridSizeX + (centerX - 1 + (i % 3))
+  );
+
+  let centerBossPlaced = false;
+  let centerPitPlaced = false;
+
+  // Create a flat, shuffled list of all individual entities to place
+  const entitiesToPlace = [];
+  ALL_ENTITIES.forEach((entityType) => {
+    for (let i = 0; i < entityType.amount; i++) {
+      entitiesToPlace.push({ ...entityType });
+    }
+  });
+  entitiesToPlace.sort(() => Math.random() - 0.5); // Shuffle for random placement order
+
+  entitiesToPlace.forEach((entity) => {
+    const entityInstance = { ...entity };
+    const loopMultiplier = 1 + 0.2 * (currentLoop - 1); // +20% per loop
+    entityInstance.damage = Math.ceil(entityInstance.damage * loopMultiplier);
+    entityInstance.xp = Math.ceil(
+      (entityInstance.xp || 0) * settings.monsterXpMultiplier
+    );
+
+    let index;
+    let placementValid = false;
+    let attempts = 0;
+
+    while (!placementValid && attempts < 200) {
+      index = Math.floor(Math.random() * grid.length);
+      attempts++;
+
+      // Rule 1: Tile must be empty
+      if (grid[index].type !== "hidden") continue;
+
+      const isCenterTile = startAreaIndices.includes(index);
+      const isMonsterOrPit = ["monster", "pit", "boss", "eye"].includes(entity.type);
+
+      // Rule 2: Center tile placement restrictions
+      if (isCenterTile) {
+        if (entity.type === "boss") {
+          // Fail if a boss is already in the center OR the 10% chance fails
+          if (centerBossPlaced || Math.random() > 0.1) continue;
+        }
+        if (entity.type === "pit") {
+          // Fail if a pit is already in the center
+          if (centerPitPlaced) continue;
+        }
+      }
+      
+      // Rule 3: Don't place monsters/pits next to too many others
+      if (isMonsterOrPit) {
+        if (countMonsterOrPitNeighbors(index) > 2) continue; // Prevents clumping
+      }
+
+      placementValid = true; // All checks passed
+    }
+    
+    if (placementValid) {
+        grid[index] = {
+            ...grid[index],
+            type: entityInstance.type,
+            damage: entityInstance.damage,
+            monsterName: entityInstance.name,
+        };
+        if (entityInstance.type === "eye") hideNumbersAroundEye(index);
+        
+        // After successful placement, update flags
+        if(startAreaIndices.includes(index)) {
+            if(entity.type === 'boss') centerBossPlaced = true;
+            if(entity.type === 'pit') centerPitPlaced = true;
+        }
+    }
+  });
+
+  // Place Potions
+  const potionCount = settings.potionCount;
+  let placedPotions = 0;
+  while (placedPotions < potionCount) {
+    let index = Math.floor(Math.random() * grid.length);
+    if (grid[index].type === "hidden") {
+      grid[index].hasPotion = true;
+      grid[index].type = "empty";
+      placedPotions++;
+    }
+  }
 }
 
 function placeElements(settings) {
@@ -407,9 +358,6 @@ function handleTileClick(index) {
       document.getElementById("health-display"),
       "text-green-400"
     );
-  } else if (tile.type === "shop") {
-    openShopModal();
-    return; // Stop processing after opening the shop
   }
 
   // --- MONSTER LOGIC ---
@@ -433,8 +381,6 @@ function handleTileClick(index) {
     const monsterData = ALL_ENTITIES.find((m) => m.name === tile.monsterName);
     if (monsterData) {
       userProfile.xp += monsterData.xp;
-      player.gold += monsterData.gold;
-      runStats.goldCollected += monsterData.gold;
       runStats.monstersKilled++;
       userProfile.totalKills = (userProfile.totalKills || 0) + 1;
       saveProfile();
@@ -444,12 +390,6 @@ function handleTileClick(index) {
         document.getElementById("health-display"),
         "text-red-400"
       );
-      if (monsterData.gold > 0)
-        showFloatingStatText(
-          `+${monsterData.gold}`,
-          document.getElementById("gold-display"),
-          "text-yellow-400"
-        );
       if (monsterData.xp > 0)
         showFloatingStatText(
           `+${monsterData.xp}`,
@@ -685,12 +625,6 @@ function updateDisplay() {
   // Health
   healthValueEl.innerText = Math.max(0, player.health);
   maxHealthEl.innerText = player.maxHealth;
-
-  const goldValueEl = document.getElementById("gold-value");
-  if (goldValueEl) {
-    goldValueEl.innerText = player.gold;
-  }
-  // --- END NEW ---
 
   // Level and XP
   const playerLevelEl = document.getElementById("player-level");
@@ -1028,10 +962,6 @@ profileModal.addEventListener("click", (e) => {
   if (e.target === profileModal) closeProfileModal();
 });
 
-closeShopModalBtn.addEventListener("click", closeShopModal);
-shopModal.addEventListener("click", (e) => {
-  if (e.target === shopModal) closeShopModal();
-});
 
 // Initial load
 loadProfile();
