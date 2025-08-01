@@ -707,19 +707,32 @@ function endGame(title, isWin) {
 
   // --- Render Run Stats ---
   const statsContainer = document.getElementById("run-stats-container");
-  statsContainer.innerHTML = ""; // Clear stats by default
-
+  if (statsContainer) {
+    statsContainer.remove();
+  }
   // Only display stats if a run has actually happened
   if (runStats) {
+    const newStatsContainer = document.createElement("div");
+    newStatsContainer.id = "run-stats-container";
+    newStatsContainer.className =
+      "text-left bg-slate-900/50 p-4 rounded-lg border border-slate-700";
     const timePlayed = ((Date.now() - runStats.startTime) / 1000).toFixed(1);
-    statsContainer.innerHTML = `
-        <h3 class="text-lg font-bold text-sky-400 mb-2">Run Summary (Loop ${runStats.loop})</h3>
+    newStatsContainer.innerHTML = `
+        <h3 class="text-lg font-bold text-sky-400 mb-2">Run Summary (Loop ${
+          runStats.loop
+        })</h3>
         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <span class="text-slate-400">Time Played:</span><span class="text-white font-semibold">${timePlayed}s</span>
-            <span class="text-slate-400">Monsters Slain:</span><span class="text-white font-semibold">${runStats.monstersKilled}</span>
-            <span class="text-slate-400">Damage Taken:</span><span class="text-white font-semibold">${runStats.damageTaken}</span>
+            <span class="text-slate-400">Monsters Slain:</span><span class="text-white font-semibold">${
+              runStats.monstersKilled
+            }</span>
+            <span class="text-slate-400">Damage Taken:</span><span class="text-white font-semibold">${
+              runStats.damageTaken
+            }</span>
         </div>
     `;
+    const optionsContainer = document.getElementById("new-game-options");
+    popupEl.insertBefore(newStatsContainer, optionsContainer);
   }
   // --- Render New Game Options ---
   const optionsContainer = document.getElementById("new-game-options");
