@@ -784,17 +784,6 @@ function endGame(title, isWin) {
   const optionsContainer = document.getElementById("new-game-options");
   optionsContainer.innerHTML = ""; // Clear previous buttons
 
-  // If it's a win and it was the Golem, show Endless Mode option
-  const isGolemWin =
-    isWin && grid.find((t) => t.monsterName === "Golem" && t.isDefeated);
-  if (isGolemWin) {
-    const continueBtn = document.createElement("button");
-    continueBtn.className =
-      "px-6 py-3 text-lg font-bold text-white bg-purple-600 rounded-lg cursor-pointer transition-colors hover:bg-purple-500";
-    optionsContainer.appendChild(continueBtn);
-    optionsContainer.innerHTML += `<p class="text-sm text-slate-400 my-2">Or start a new game:</p>`;
-  }
-
   // Show difficulty options
   Object.keys(DIFFICULTY_SETTINGS).forEach((key) => {
     const btn = document.createElement("button");
