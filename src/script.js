@@ -58,6 +58,7 @@ const DIFFICULTY_SETTINGS = {
 let currentDifficulty;
 let currentLoop = 1;
 let runStats;
+let isInitialLaunch = true; // Tracks if it's the first game load
 // DOM Elements
 const healthValueEl = document.getElementById("health-value");
 const maxHealthEl = document.getElementById("max-health");
@@ -76,6 +77,7 @@ const monsterPanelBtn = document.getElementById("monster-panel-btn");
 const mobileMonsterPopup = document.getElementById("mobile-monster-popup");
 const mobilePopupContent = mobileMonsterPopup.querySelector(".popup-content");
 const closeMonsterPopup = document.getElementById("close-monster-popup");
+const mobileMonsterList = document.getElementById("mobile-monster-list");
 const headerTextEl = document.getElementById("header-text");
 
 const profileBtn = document.getElementById("profile-btn");
@@ -85,6 +87,7 @@ const profileContent = document.getElementById("profile-content");
 // --- Game Initialization & State ---
 
 function initializeGrid(difficulty = "normal", isNewGame = true) {
+  isInitialLaunch = false; // The game has started, not the initial launch anymore
   currentDifficulty = difficulty;
   const settings = DIFFICULTY_SETTINGS[difficulty];
 
@@ -162,6 +165,26 @@ function initializeGrid(difficulty = "normal", isNewGame = true) {
   updateDisplay();
 }
 
+function countMonsterOrPitNeighbors(index) {
+  let count = 0;
+  const y = Math.floor(index / gridSizeX);
+  const x = index % gridSizeX;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx >= 0 && nx < gridSizeX && ny >= 0 && ny < gridSizeY) {
+        const neighbor = grid[ny * gridSizeX + nx];
+        if (["monster", "pit", "boss", "eye"].includes(neighbor.type)) {
+          count++;
+        }
+      }
+    }
+  }
+  return count;
+}
+
 function placeElements(settings) {
   const startAreaIndices = Array.from(
     { length: 9 },
@@ -201,7 +224,9 @@ function placeElements(settings) {
       if (grid[index].type !== "hidden") continue;
 
       const isCenterTile = startAreaIndices.includes(index);
-      const isMonsterOrPit = ["monster", "pit", "boss", "eye"].includes(entity.type);
+      const isMonsterOrPit = ["monster", "pit", "boss", "eye"].includes(
+        entity.type
+      );
 
       // Rule 2: Center tile placement restrictions
       if (isCenterTile) {
@@ -214,7 +239,7 @@ function placeElements(settings) {
           if (centerPitPlaced) continue;
         }
       }
-      
+
       // Rule 3: Don't place monsters/pits next to too many others
       if (isMonsterOrPit) {
         if (countMonsterOrPitNeighbors(index) > 2) continue; // Prevents clumping
@@ -222,65 +247,8 @@ function placeElements(settings) {
 
       placementValid = true; // All checks passed
     }
-    
+
     if (placementValid) {
-        grid[index] = {
-            ...grid[index],
-            type: entityInstance.type,
-            damage: entityInstance.damage,
-            monsterName: entityInstance.name,
-        };
-        if (entityInstance.type === "eye") hideNumbersAroundEye(index);
-        
-        // After successful placement, update flags
-        if(startAreaIndices.includes(index)) {
-            if(entity.type === 'boss') centerBossPlaced = true;
-            if(entity.type === 'pit') centerPitPlaced = true;
-        }
-    }
-  });
-
-  // Place Potions
-  const potionCount = settings.potionCount;
-  let placedPotions = 0;
-  while (placedPotions < potionCount) {
-    let index = Math.floor(Math.random() * grid.length);
-    if (grid[index].type === "hidden") {
-      grid[index].hasPotion = true;
-      grid[index].type = "empty";
-      placedPotions++;
-    }
-  }
-}
-
-function placeElements(settings) {
-  const startAreaIndices = Array.from(
-    { length: 9 },
-    (_, i) =>
-      (centerY - 1 + Math.floor(i / 3)) * gridSizeX + (centerX - 1 + (i % 3))
-  );
-
-  const placeEntity = (entity, count) => {
-    // Create a copy of the entity to modify its stats for this run
-    const entityInstance = { ...entity };
-
-    // Apply difficulty and endless loop scaling
-    const loopMultiplier = 1 + 0.2 * (currentLoop - 1); // +20% per loop
-    entityInstance.damage = Math.ceil(entityInstance.damage * loopMultiplier);
-    entityInstance.xp = Math.ceil(
-      (entityInstance.xp || 0) * settings.monsterXpMultiplier
-    ); // XP doesn't scale with loops
-
-    for (let i = 0; i < count; i++) {
-      let index;
-      do {
-        index = Math.floor(Math.random() * grid.length);
-      } while (
-        grid[index].type !== "hidden" ||
-        (entity.type === "eye" && startAreaIndices.includes(index))
-      );
-
-      // Use the scaled stats from entityInstance
       grid[index] = {
         ...grid[index],
         type: entityInstance.type,
@@ -288,28 +256,18 @@ function placeElements(settings) {
         monsterName: entityInstance.name,
       };
       if (entityInstance.type === "eye") hideNumbersAroundEye(index);
+
+      // After successful placement, update flags
+      if (startAreaIndices.includes(index)) {
+        if (entity.type === "boss") centerBossPlaced = true;
+        if (entity.type === "pit") centerPitPlaced = true;
+      }
     }
-  };
+  });
 
-  ALL_ENTITIES.forEach((m) => placeEntity(m, m.amount));
-
-  // Use the potion count from settings
+  // Place Potions
   const potionCount = settings.potionCount;
-
-  const guaranteedPotions = 2;
   let placedPotions = 0;
-  const safeStartTiles = startAreaIndices.filter(
-    (index) => grid[index].type === "hidden"
-  );
-
-  for (let i = 0; i < guaranteedPotions && safeStartTiles.length > 0; i++) {
-    const randIndex = Math.floor(Math.random() * safeStartTiles.length);
-    const tileIndex = safeStartTiles.splice(randIndex, 1)[0];
-    grid[tileIndex].hasPotion = true;
-    grid[tileIndex].type = "empty";
-    placedPotions++;
-  }
-
   while (placedPotions < potionCount) {
     let index = Math.floor(Math.random() * grid.length);
     if (grid[index].type === "hidden") {
@@ -757,7 +715,6 @@ function endGame(title, isWin) {
         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <span class="text-slate-400">Time Played:</span><span class="text-white font-semibold">${timePlayed}s</span>
             <span class="text-slate-400">Monsters Slain:</span><span class="text-white font-semibold">${runStats.monstersKilled}</span>
-            <span class="text-slate-400">Gold Collected:</span><span class="text-white font-semibold">${runStats.goldCollected}</span>
             <span class="text-slate-400">Damage Taken:</span><span class="text-white font-semibold">${runStats.damageTaken}</span>
         </div>
     `;
@@ -951,7 +908,14 @@ mobileMonsterPopup.addEventListener("click", (e) => {
   if (e.target === mobileMonsterPopup) hideMobileMonsterPanel();
 });
 gameOverContainer.addEventListener("click", (e) => {
-  if (e.target === gameOverContainer) closeEndGamePopup();
+  // If it's the initial launch, do not close the popup by clicking outside
+  if (isInitialLaunch) {
+    return;
+  }
+  // Otherwise, allow closing it
+  if (e.target === gameOverContainer) {
+    closeEndGamePopup();
+  }
 });
 
 window.addEventListener("resize", resizeGrid);
