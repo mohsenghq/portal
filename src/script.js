@@ -32,18 +32,21 @@ const DIFFICULTY_SETTINGS = {
     monsterDamageMultiplier: 1.0,
     monsterXpMultiplier: 0.8,
     potionCount: 15,
+    pits: 4, // Reduced pits for easier gameplay
   },
   normal: {
     name: "Normal",
     monsterDamageMultiplier: 1.0,
     monsterXpMultiplier: 1.0,
     potionCount: 12,
+    pits: 7, // Normal number of pits
   },
   hard: {
     name: "Hard",
     monsterDamageMultiplier: 1.0,
     monsterXpMultiplier: 1.2,
     potionCount: 9,
+    pits: 10, // Increased pits for more challenge
   },
 };
 
@@ -174,97 +177,133 @@ function countMonsterOrPitNeighbors(index) {
 }
 
 function placeElements(settings) {
-  const startAreaIndices = Array.from(
-    { length: 9 },
-    (_, i) =>
-      (centerY - 1 + Math.floor(i / 3)) * gridSizeX + (centerX - 1 + (i % 3))
-  );
-
-  let centerBossPlaced = false;
-  let centerPitPlaced = false;
-
-  // Create a flat, shuffled list of all individual entities to place
-  const entitiesToPlace = [];
-  ALL_ENTITIES.forEach((entityType) => {
-    for (let i = 0; i < entityType.amount; i++) {
-      entitiesToPlace.push({ ...entityType });
-    }
-  });
-  entitiesToPlace.sort(() => Math.random() - 0.5); // Shuffle for random placement order
-
-  entitiesToPlace.forEach((entity) => {
-    const entityInstance = { ...entity };
-    entityInstance.damage = Math.ceil(entityInstance.damage);
-    entityInstance.xp = Math.ceil(
-      (entityInstance.xp || 0) * settings.monsterXpMultiplier
+    const startAreaIndices = Array.from({
+        length: 9
+    }, (_, i) =>
+        (centerY - 1 + Math.floor(i / 3)) * gridSizeX + (centerX - 1 + (i % 3))
     );
 
-    let index;
-    let placementValid = false;
-    let attempts = 0;
+    let centerBossPlaced = false;
+    let centerPitPlaced = false;
 
-    while (!placementValid && attempts < 200) {
-      index = Math.floor(Math.random() * grid.length);
-      attempts++;
+    // Create a flat, shuffled list of all individual entities to place
+    const entitiesToPlace = [];
+    const nonPitEntities = [...BOSSES, ...MONSTERS.filter(m => m.name !== "Bottomless pit")];
 
-      // Rule 1: Tile must be empty
-      if (grid[index].type !== "hidden") continue;
-
-      const isCenterTile = startAreaIndices.includes(index);
-      const isMonsterOrPit = ["monster", "pit", "boss", "eye"].includes(
-        entity.type
-      );
-
-      // Rule 2: Center tile placement restrictions
-      if (isCenterTile) {
-        if (entity.type === "boss") {
-          // Fail if a boss is already in the center OR the 10% chance fails
-          if (centerBossPlaced || Math.random() > 0.1) continue;
+    nonPitEntities.forEach((entityType) => {
+        for (let i = 0; i < entityType.amount; i++) {
+            entitiesToPlace.push({ ...entityType
+            });
         }
-        if (entity.type === "pit") {
-          // Fail if a pit is already in the center
-          if (centerPitPlaced) continue;
+    });
+
+    const pitEntity = MONSTERS.find(m => m.name === "Bottomless pit");
+    if (pitEntity) {
+        for (let i = 0; i < settings.pits; i++) {
+            entitiesToPlace.push({ ...pitEntity
+            });
         }
-      }
+    }
+    entitiesToPlace.sort(() => Math.random() - 0.5); // Shuffle for random placement order
 
-      // Rule 3: Don't place monsters/pits next to too many others
-      if (isMonsterOrPit) {
-        if (countMonsterOrPitNeighbors(index) > 2) continue; // Prevents clumping
-      }
+    entitiesToPlace.forEach((entity) => {
+        const entityInstance = { ...entity
+        };
+        entityInstance.damage = Math.ceil(entityInstance.damage);
+        entityInstance.xp = Math.ceil(
+            (entityInstance.xp || 0) * settings.monsterXpMultiplier
+        );
 
-      placementValid = true; // All checks passed
+        let index;
+        let placementValid = false;
+        let attempts = 0;
+
+        while (!placementValid && attempts < 200) {
+            index = Math.floor(Math.random() * grid.length);
+            attempts++;
+
+            if (grid[index].type !== "hidden") continue;
+
+            const isCenterTile = startAreaIndices.includes(index);
+            const isMonsterOrPit = ["monster", "pit", "boss", "eye"].includes(
+                entity.type
+            );
+
+            if (isCenterTile) {
+                if (entity.type === "boss") {
+                    if (centerBossPlaced || Math.random() > 0.1) continue;
+                }
+                if (entity.type === "pit") {
+                    if (centerPitPlaced) continue;
+                }
+            }
+
+            if (isMonsterOrPit) {
+                if (countMonsterOrPitNeighbors(index) > 2) continue;
+            }
+
+            placementValid = true;
+        }
+
+        if (placementValid) {
+            grid[index] = {
+                ...grid[index],
+                type: entityInstance.type,
+                damage: entityInstance.damage,
+                monsterName: entityInstance.name,
+            };
+            if (entityInstance.type === "eye") hideNumbersAroundEye(index);
+
+            if (startAreaIndices.includes(index)) {
+                if (entity.type === "boss") centerBossPlaced = true;
+                if (entity.type === "pit") centerPitPlaced = true;
+            }
+        }
+    });
+
+    // --- MODIFICATION START: GUARANTEE POTIONS IN START AREA ---
+
+    const potionCount = settings.potionCount;
+    let placedPotions = 0;
+
+    // 1. Find all empty tiles available for potions
+    const allEmptyIndices = grid.map((tile, index) => tile.type === 'hidden' ? index : -1).filter(index => index !== -1);
+
+    // 2. Separate them into start area and outside area
+    const emptyStartAreaIndices = allEmptyIndices.filter(index => startAreaIndices.includes(index));
+    const emptyOutsideIndices = allEmptyIndices.filter(index => !startAreaIndices.includes(index));
+
+    // 3. Shuffle the lists for random placement within their respective areas
+    emptyStartAreaIndices.sort(() => Math.random() - 0.5);
+    emptyOutsideIndices.sort(() => Math.random() - 0.5);
+
+    // 4. Place exactly 2 potions in the start area
+    const potionsToPlaceInStart = 2;
+    for (let i = 0; i < potionsToPlaceInStart; i++) {
+        if (emptyStartAreaIndices.length > 0) {
+            const index = emptyStartAreaIndices.shift(); // Take a random empty spot from the start area
+            grid[index].hasPotion = true;
+            grid[index].type = "empty";
+            placedPotions++;
+        }
     }
 
-    if (placementValid) {
-      grid[index] = {
-        ...grid[index],
-        type: entityInstance.type,
-        damage: entityInstance.damage,
-        monsterName: entityInstance.name,
-      };
-      if (entityInstance.type === "eye") hideNumbersAroundEye(index);
-
-      // After successful placement, update flags
-      if (startAreaIndices.includes(index)) {
-        if (entity.type === "boss") centerBossPlaced = true;
-        if (entity.type === "pit") centerPitPlaced = true;
-      }
+    // 5. Place the rest of the potions randomly outside the start area
+    let remainingPotionsToPlace = potionCount - placedPotions;
+    for (let i = 0; i < remainingPotionsToPlace; i++) {
+        if (emptyOutsideIndices.length > 0) {
+            const index = emptyOutsideIndices.shift(); // Take a random empty spot from outside
+            grid[index].hasPotion = true;
+            grid[index].type = "empty";
+        } else if (emptyStartAreaIndices.length > 0) {
+            // Fallback: If outside is full, use any remaining start area spots
+            const index = emptyStartAreaIndices.shift();
+            grid[index].hasPotion = true;
+            grid[index].type = "empty";
+        }
     }
-  });
-
-  // Place Potions
-  const potionCount = settings.potionCount;
-  let placedPotions = 0;
-  while (placedPotions < potionCount) {
-    let index = Math.floor(Math.random() * grid.length);
-    if (grid[index].type === "hidden") {
-      grid[index].hasPotion = true;
-      grid[index].type = "empty";
-      placedPotions++;
-    }
-  }
+    // --- MODIFICATION END ---
 }
-
 // --- Core Game Logic ---
 
 function handleTileClick(index) {
@@ -364,7 +403,7 @@ function handleTileClick(index) {
       saveProfile(); // Save progress on level up!
 
       // Give a reward for the current game
-      player.maxHealth += 2;
+      // player.maxHealth += 2;
       player.health = player.maxHealth;
       showFloatingStatText(
         "Level Up!",
