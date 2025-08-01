@@ -79,6 +79,7 @@ const mobilePopupContent = mobileMonsterPopup.querySelector(".popup-content");
 const closeMonsterPopup = document.getElementById("close-monster-popup");
 const mobileMonsterList = document.getElementById("mobile-monster-list");
 const headerTextEl = document.getElementById("header-text");
+const showSummaryBtn = document.getElementById("show-summary-btn");
 
 const profileBtn = document.getElementById("profile-btn");
 const profileModal = document.getElementById("profile-modal");
@@ -122,6 +123,7 @@ function initializeGrid(difficulty = "normal", isNewGame = true) {
   closeEndGamePopup(true);
   isFlagMode = false;
   flagModeBtn.classList.remove("bg-sky-500/50");
+  showSummaryBtn.classList.add("hidden");
 
   // Create Tiles
   for (let i = 0; i < gridSizeX * gridSizeY; i++) {
@@ -759,14 +761,21 @@ function endGame(title, isWin) {
   popupEl.classList.remove("scale-95");
 }
 
+function openEndGamePopup() {
+  gameOverContainer.classList.remove("invisible", "opacity-0");
+  popupEl.classList.remove("scale-95");
+  gridEl.classList.add("filter", "brightness-[.4]");
+  showSummaryBtn.classList.add("hidden");
+}
+
 function closeEndGamePopup(isNewGame = false) {
   gameOverContainer.classList.remove("visible", "opacity-100");
   gameOverContainer.classList.add("invisible", "opacity-0");
   popupEl.classList.remove("scale-100");
   popupEl.classList.add("scale-95");
-  gridEl.classList.remove("brightness-[.4]");
+  gridEl.classList.remove("filter", "brightness-[.4]");
   if (!isNewGame) {
-    newGameFooterBtn.classList.remove("hidden");
+    showSummaryBtn.classList.remove("hidden");
   }
 }
 
@@ -907,6 +916,7 @@ closeMonsterPopup.addEventListener("click", hideMobileMonsterPanel);
 mobileMonsterPopup.addEventListener("click", (e) => {
   if (e.target === mobileMonsterPopup) hideMobileMonsterPanel();
 });
+showSummaryBtn.addEventListener("click", openEndGamePopup);
 gameOverContainer.addEventListener("click", (e) => {
   // If it's the initial launch, do not close the popup by clicking outside
   if (isInitialLaunch) {
