@@ -1,6 +1,6 @@
 # Portals A Cool Minesweeper Like Game
 
-This is a simple clone of Lost Dogs:Portals game in telegram bot [@lost_dogs_portals_bot](t.me/lost_dogs_portals_bot) that written with HTML, Javescript and [tailwindcss](https://tailwindcss.com/)
+This is a simple clone of Lost Dogs:Portals game in telegram bot [@lost_dogs_portals_bot](https://t.me/lost_dogs_portals_bot) that written with HTML, Javescript and [tailwindcss](https://tailwindcss.com/)
 
 # How run
 
@@ -47,13 +47,9 @@ for see the full tutorial with nice visuals and more explanation see this page o
 
 # Added this features for fun
 Player Progression & Items
-Experience and Levels: Grant XP for defeating monsters. Each level-up could increase your max health by 1.
-
-Gold & Shops: Some empty tiles could contain gold. You could then add a special "Shop" tile on the grid where you can spend gold to buy health, shields, or other items.
+Experience and Levels: Grant XP for defeating monsters.
 
 Game Modes & Difficulty
 Difficulty Levels: Add "Easy," "Normal," and "Hard" modes that change the number of monsters, potions, and starting health.
-
-Endless Mode: After beating the final boss, the grid could reset with stronger monsters and bosses, letting players see how long they can survive.
 
 Timed Challenge: Add a timer to see how fast a player can win, encouraging replay to beat their own record.
