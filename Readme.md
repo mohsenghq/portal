@@ -43,3 +43,17 @@ Your main goal is to find and defeat the three main bosses (Light Mage <img src=
 - Each time you defeat a boss, your maximum health increases!
 
 for see the full tutorial with nice visuals and more explanation see this page of official game: [Lost Dogs: Portals](https://telegra.ph/Lost-Dogs-Portals-ENG-05-09)
+
+
+# Added this features for fun
+Player Progression & Items
+Experience and Levels: Grant XP for defeating monsters. Each level-up could increase your max health by 1.
+
+Gold & Shops: Some empty tiles could contain gold. You could then add a special "Shop" tile on the grid where you can spend gold to buy health, shields, or other items.
+
+Game Modes & Difficulty
+Difficulty Levels: Add "Easy," "Normal," and "Hard" modes that change the number of monsters, potions, and starting health.
+
+Endless Mode: After beating the final boss, the grid could reset with stronger monsters and bosses, letting players see how long they can survive.
+
+Timed Challenge: Add a timer to see how fast a player can win, encouraging replay to beat their own record.
