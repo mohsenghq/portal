@@ -1,6 +1,6 @@
 # Portals A Cool Minesweeper Like Game
 
-This is a simple clone of Lost Dogs:Portals game in telegram bot [@lost_dogs_portals_bot](t.me/lost_dogs_portals_bot) that written with HTML, Javescript and [tailwindcss](https://tailwindcss.com/)
+This is a simple clone of Lost Dogs:Portals game in telegram bot [@lost_dogs_portals_bot](https://t.me/lost_dogs_portals_bot) that written with HTML, Javescript and [tailwindcss](https://tailwindcss.com/)
 
 # How run
 
