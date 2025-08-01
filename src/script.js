@@ -5,14 +5,7 @@ const centerY = Math.floor(gridSizeY / 2);
 let health, maxHealth, isFlagMode, defeatedBossesCount;
 let player;
 let userProfile = {};
-const ACHIEVEMENTS = {
-  FIRST_WIN: { name: "Novice Adventurer", description: "Win your first game." },
-  SLAYER: { name: "Monster Slayer", description: "Defeat 100 monsters total." },
-  PERFECTIONIST: {
-    name: "Perfectionist",
-    description: "Win a game with full health.",
-  },
-};
+
 const grid = [];
 const BOSSES = [
   { name: "Light Mage", damage: 6, amount: 1, type: "boss", xp: 50 },
@@ -344,6 +337,16 @@ function handleTileClick(index) {
       runStats.monstersKilled++;
       userProfile.totalKills = (userProfile.totalKills || 0) + 1;
       saveProfile();
+    
+      // --- NEW: Monster Kill Log Logic ---
+      const monsterName = monsterData.name;
+      if (!userProfile.monsterKillLog[monsterName]) {
+        userProfile.monsterKillLog[monsterName] = 0;
+      }
+      userProfile.monsterKillLog[monsterName]++;
+      // --- End of New Logic ---
+
+      saveProfile();
 
       showFloatingStatText(
         `-${damageTaken}`,
@@ -621,46 +624,33 @@ function closeProfileModal() {
 }
 
 function renderProfile() {
+  // --- Existing Stats (Games Won, Kills, Level) ---
   const statsList = document.getElementById("profile-stats-list");
-  const achievementsList = document.getElementById("achievements-list");
-
-  // Render Stats
   statsList.innerHTML = `
-        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-green-400">${
-          userProfile.wins
-        }</div><div class="text-sm text-slate-400">Games Won</div></div>
-        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-red-400">${
-          userProfile.totalKills
-        }</div><div class="text-sm text-slate-400">Total Kills</div></div>
-        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-purple-400">${
-          userProfile.level
-        }</div><div class="text-sm text-slate-400">Current Level</div></div>
-        <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-yellow-400">${
-          Object.keys(userProfile.achievements).length
-        }</div><div class="text-sm text-slate-400">Achievements</div></div>
-    `;
+    <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-green-400">${userProfile.wins}</div><div class="text-sm text-slate-400">Games Won</div></div>
+    <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-red-400">${userProfile.losses}</div><div class="text-sm text-slate-400">Games Lost</div></div>
+    <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-purple-400">${userProfile.level}</div><div class="text-sm text-slate-400">Current Level</div></div>
+    <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-slate-300">${(userProfile.totalTimePlayed / 3600).toFixed(1)}h</div><div class="text-sm text-slate-400">Time Played</div></div>
+  `;
 
-  // Render Achievements
-  achievementsList.innerHTML = ""; // Clear old list
-  for (const key in ACHIEVEMENTS) {
-    const ach = ACHIEVEMENTS[key];
-    const isUnlocked = userProfile.achievements[key];
+  // --- NEW: Records (Fastest Win, Highest Loop) ---
+  const recordsList = document.getElementById("records-stats-list");
+  const fastestWinTime = userProfile.fastestWin ? `${userProfile.fastestWin.toFixed(1)}s` : "N/A";
+  recordsList.innerHTML = `
+    <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-yellow-400">${fastestWinTime}</div><div class="text-sm text-slate-400">Fastest Win</div></div>
+    <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-sky-400">${userProfile.highestLoop}</div><div class="text-sm text-slate-400">Highest Loop</div></div>
+  `;
 
-    achievementsList.innerHTML += `
-            <div class="flex items-center gap-3 p-2 rounded-md transition-all ${
-              isUnlocked ? "bg-yellow-600/20" : "bg-slate-700 opacity-60"
-            }">
-                <img src="icons/achievement_${
-                  isUnlocked ? "unlocked" : "locked"
-                }.png" class="w-10 h-10">
-                <div>
-                    <h5 class="font-bold ${
-                      isUnlocked ? "text-yellow-400" : "text-slate-300"
-                    }">${ach.name}</h5>
-                    <p class="text-sm text-slate-400">${ach.description}</p>
-                </div>
-            </div>
-        `;
+  // --- NEW: Monster Kill Log ---
+  const killLogList = document.getElementById("monster-kill-log-list");
+  killLogList.innerHTML = ""; // Clear old list
+  if (Object.keys(userProfile.monsterKillLog).length === 0) {
+    killLogList.innerHTML = `<span class="text-slate-500 col-span-full text-center">No monsters slayed yet.</span>`;
+  } else {
+    for (const monsterName in userProfile.monsterKillLog) {
+      const count = userProfile.monsterKillLog[monsterName];
+      killLogList.innerHTML += `<span class="text-slate-400">${monsterName}:</span><span class="font-semibold text-white">${count}</span>`;
+    }
   }
 }
 
@@ -696,12 +686,46 @@ function resizeGrid() {
 // --- Popups and Modals ---
 
 function endGame(title, isWin) {
-  if (gameOverContainer.classList.contains("visible")) return; // Prevent double trigger
+  if (gameOverContainer.classList.contains("visible") && title !== "Welcome!") return;
+
+  // --- Don't update stats for the initial welcome screen ---
+  const isRealGameEnd = runStats && title !== "Welcome!";
+
+  if (isRealGameEnd) {
+    const timePlayed = (Date.now() - runStats.startTime) / 1000; // time in seconds
+
+    // 1. Games Played / Lost
+    userProfile.gamesPlayed++;
+    if (!isWin) {
+      userProfile.losses++;
+    }
+
+    // 2. Total Time Played
+    userProfile.totalTimePlayed += timePlayed;
+
+    // 3. Highest Loop Reached
+    if (runStats.loop > userProfile.highestLoop) {
+      userProfile.highestLoop = runStats.loop;
+    }
+  }
 
   // --- Save Profile ---
-  if (isWin) {
+  if (isWin && title !== "Welcome!") {
     userProfile.wins = (userProfile.wins || 0) + 1;
-    checkAchievements("win");
+
+    if (isRealGameEnd) {
+      const timePlayed = (Date.now() - runStats.startTime) / 1000;
+
+      // 4. Wins by Difficulty
+      if (currentDifficulty) {
+        userProfile.winsByDifficulty[currentDifficulty]++;
+      }
+
+      // 5. Fastest Win
+      if (userProfile.fastestWin === null || timePlayed < userProfile.fastestWin) {
+        userProfile.fastestWin = timePlayed;
+      }
+    }
   }
   saveProfile();
 
@@ -855,49 +879,26 @@ function revealNumbersAroundEye(eyeIndex) {
     }
 }
 
-function checkAchievements(event) {
-  let newAchievement = null;
 
-  if (event === "win" && !userProfile.achievements.FIRST_WIN) {
-    userProfile.achievements.FIRST_WIN = true;
-    newAchievement = ACHIEVEMENTS.FIRST_WIN;
-  }
-
-  if (userProfile.totalKills >= 100 && !userProfile.achievements.SLAYER) {
-    userProfile.achievements.SLAYER = true;
-    newAchievement = ACHIEVEMENTS.SLAYER;
-  }
-
-  if (
-    event === "win" &&
-    player && // This check prevents an error on the welcome screen
-    player.health === player.maxHealth &&
-    !userProfile.achievements.PERFECTIONIST
-  ) {
-    userProfile.achievements.PERFECTIONIST = true;
-    newAchievement = ACHIEVEMENTS.PERFECTIONIST;
-  }
-
-  if (newAchievement) {
-    // Code to show a fancy "Achievement Unlocked!" popup
-    console.log(`Achievement Unlocked: ${newAchievement.name}`);
-    saveProfile();
-  }
-}
 
 function loadProfile() {
   const savedProfile = localStorage.getItem("lostDogsProfile");
   if (savedProfile) {
     userProfile = JSON.parse(savedProfile);
 
-    // --- FIX: Add default values if they are missing from an old save ---
-    if (userProfile.level === undefined) {
-      userProfile.level = 1;
+    // --- Add default values for backward compatibility ---
+    if (userProfile.level === undefined) userProfile.level = 1;
+    if (userProfile.xp === undefined) userProfile.xp = 0;
+    if (userProfile.gamesPlayed === undefined) userProfile.gamesPlayed = 0;
+    if (userProfile.losses === undefined) userProfile.losses = 0;
+    if (userProfile.totalTimePlayed === undefined) userProfile.totalTimePlayed = 0;
+    if (userProfile.winsByDifficulty === undefined) {
+      userProfile.winsByDifficulty = { easy: 0, normal: 0, hard: 0 };
     }
-    if (userProfile.xp === undefined) {
-      userProfile.xp = 0;
-    }
-    // --- End of fix ---
+    if (userProfile.monsterKillLog === undefined) userProfile.monsterKillLog = {};
+    if (userProfile.highestLoop === undefined) userProfile.highestLoop = 1;
+    if (userProfile.fastestWin === undefined) userProfile.fastestWin = null;
+
   } else {
     // Default profile for a brand new user
     userProfile = {
@@ -905,7 +906,13 @@ function loadProfile() {
       totalKills: 0,
       level: 1,
       xp: 0,
-      achievements: {},
+      gamesPlayed: 0,
+      losses: 0,
+      totalTimePlayed: 0, // in seconds
+      winsByDifficulty: { easy: 0, normal: 0, hard: 0 },
+      monsterKillLog: {},
+      highestLoop: 1,
+      fastestWin: null, // stored in seconds
     };
   }
 }
