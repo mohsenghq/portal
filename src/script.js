@@ -49,7 +49,6 @@ const DIFFICULTY_SETTINGS = {
 
 // Add new global state variables
 let currentDifficulty;
-let currentLoop = 1;
 let runStats;
 let isInitialLaunch = true; // Tracks if it's the first game load
 // DOM Elements
@@ -86,17 +85,12 @@ function initializeGrid(difficulty = "normal", isNewGame = true) {
   const settings = DIFFICULTY_SETTINGS[difficulty];
 
   if (isNewGame) {
-    currentLoop = 1;
     // Reset the persistent profile only for a brand new session, if needed
     // (we are keeping level/xp, so this part is for game-specific stats)
     player = {
       health: 6,
       maxHealth: 6,
     };
-  } else {
-    // Continuing an endless run
-    currentLoop++;
-    player.health = player.maxHealth; // Heal to full for the next loop
   }
 
   // Initialize stats for this specific run
@@ -104,7 +98,6 @@ function initializeGrid(difficulty = "normal", isNewGame = true) {
     startTime: Date.now(),
     monstersKilled: 0,
     damageTaken: 0,
-    loop: currentLoop,
   };
 
   // Reset grid and game state
@@ -201,8 +194,7 @@ function placeElements(settings) {
 
   entitiesToPlace.forEach((entity) => {
     const entityInstance = { ...entity };
-    const loopMultiplier = 1 + 0.2 * (currentLoop - 1); // +20% per loop
-    entityInstance.damage = Math.ceil(entityInstance.damage * loopMultiplier);
+    entityInstance.damage = Math.ceil(entityInstance.damage);
     entityInstance.xp = Math.ceil(
       (entityInstance.xp || 0) * settings.monsterXpMultiplier
     );
@@ -633,12 +625,11 @@ function renderProfile() {
     <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-slate-300">${(userProfile.totalTimePlayed / 3600).toFixed(1)}h</div><div class="text-sm text-slate-400">Time Played</div></div>
   `;
 
-  // --- NEW: Records (Fastest Win, Highest Loop) ---
+  // --- NEW: Records (Fastest Win) ---
   const recordsList = document.getElementById("records-stats-list");
   const fastestWinTime = userProfile.fastestWin ? `${userProfile.fastestWin.toFixed(1)}s` : "N/A";
   recordsList.innerHTML = `
     <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-yellow-400">${fastestWinTime}</div><div class="text-sm text-slate-400">Fastest Win</div></div>
-    <div class="bg-slate-900/50 p-3 rounded-lg"><div class="text-2xl font-bold text-sky-400">${userProfile.highestLoop}</div><div class="text-sm text-slate-400">Highest Loop</div></div>
   `;
 
   // --- NEW: Monster Kill Log ---
@@ -702,11 +693,6 @@ function endGame(title, isWin) {
 
     // 2. Total Time Played
     userProfile.totalTimePlayed += timePlayed;
-
-    // 3. Highest Loop Reached
-    if (runStats.loop > userProfile.highestLoop) {
-      userProfile.highestLoop = runStats.loop;
-    }
   }
 
   // --- Save Profile ---
@@ -742,9 +728,6 @@ function endGame(title, isWin) {
       "text-left bg-slate-900/50 p-4 rounded-lg border border-slate-700";
     const timePlayed = ((Date.now() - runStats.startTime) / 1000).toFixed(1);
     newStatsContainer.innerHTML = `
-        <h3 class="text-lg font-bold text-sky-400 mb-2">Run Summary (Loop ${
-          runStats.loop
-        })</h3>
         <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <span class="text-slate-400">Time Played:</span><span class="text-white font-semibold">${timePlayed}s</span>
             <span class="text-slate-400">Monsters Slain:</span><span class="text-white font-semibold">${
@@ -769,10 +752,6 @@ function endGame(title, isWin) {
     const continueBtn = document.createElement("button");
     continueBtn.className =
       "px-6 py-3 text-lg font-bold text-white bg-purple-600 rounded-lg cursor-pointer transition-colors hover:bg-purple-500";
-    continueBtn.innerText = `Continue to Loop ${currentLoop + 1}`;
-    continueBtn.addEventListener("click", () =>
-      initializeGrid(currentDifficulty, false)
-    ); // false = not a new game
     optionsContainer.appendChild(continueBtn);
     optionsContainer.innerHTML += `<p class="text-sm text-slate-400 my-2">Or start a new game:</p>`;
   }
@@ -896,7 +875,6 @@ function loadProfile() {
       userProfile.winsByDifficulty = { easy: 0, normal: 0, hard: 0 };
     }
     if (userProfile.monsterKillLog === undefined) userProfile.monsterKillLog = {};
-    if (userProfile.highestLoop === undefined) userProfile.highestLoop = 1;
     if (userProfile.fastestWin === undefined) userProfile.fastestWin = null;
 
   } else {
@@ -911,7 +889,6 @@ function loadProfile() {
       totalTimePlayed: 0, // in seconds
       winsByDifficulty: { easy: 0, normal: 0, hard: 0 },
       monsterKillLog: {},
-      highestLoop: 1,
       fastestWin: null, // stored in seconds
     };
   }
