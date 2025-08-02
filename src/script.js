@@ -795,6 +795,11 @@ function endGame(title, isWin) {
   });
 
   // --- Show the Popup ---
+  if (headerTextEl) headerTextEl.style.display = "none";
+  if (!isWin) {
+    bossNameEl.innerText = "";
+    bossProgressEl.innerText = "";
+  }
   gridEl.style.pointerEvents = "none";
   gridEl.classList.add("filter", "brightness-[.4]");
   popupTitleEl.innerText = title;
